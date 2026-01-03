@@ -11,7 +11,7 @@ const Input = ({ value, onChange, placeholder, type = 'text', autoFocus = false 
       style={{
         width: '100%',
         padding: '16px',
-        fontSize: '1.1rem',
+        fontSize: '16px',
         borderRadius: 'var(--radius-lg)',
         backgroundColor: 'rgba(0,0,0,0.03)',
         color: 'var(--text-primary)',

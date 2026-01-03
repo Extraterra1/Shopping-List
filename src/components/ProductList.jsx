@@ -111,7 +111,7 @@ const ProductList = () => {
                         <input 
                              value={editForm.name}
                              onChange={(e) => setEditForm({...editForm, name: e.target.value})}
-                             style={{ flex: 1, fontSize: '1.1rem', padding: '8px', borderRadius: '8px', border: '1px solid rgba(0,0,0,0.1)', background: 'white' }}
+                             style={{ flex: 1, fontSize: '16px', padding: '8px', borderRadius: '8px', border: '1px solid rgba(0,0,0,0.1)', background: 'white' }}
                              autoFocus
                         />
                          <button onClick={(e) => saveEdit(e, item)} style={{ color: 'var(--success-color)', padding: '8px' }}><FaSave size={18}/></button>
