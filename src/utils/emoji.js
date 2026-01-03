@@ -89,8 +89,19 @@ const emojiMap = {
   'toothpaste': '🪥',
 };
 
+let customEmojiMap = {};
+
+export const setCustomEmojiMap = (map) => {
+  customEmojiMap = map;
+};
+
 export const getEmojiForProduct = (productName) => {
-  const lowerName = productName.toLowerCase();
+  const lowerName = productName.toLowerCase().trim();
+  
+  // Custom user preference first
+  if (customEmojiMap[lowerName]) {
+    return customEmojiMap[lowerName];
+  }
   
   // Direct match
   if (emojiMap[lowerName]) return emojiMap[lowerName];

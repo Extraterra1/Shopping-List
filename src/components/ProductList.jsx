@@ -1,11 +1,14 @@
 import { useState, useEffect } from 'react';
-import { subscribeToGroceries, toggleGroceryItem, removeGroceryItem } from '../services/firestore';
+import { subscribeToGroceries, toggleGroceryItem, removeGroceryItem, updateGroceryItem, saveCustomEmoji } from '../services/firestore';
 import { motion, AnimatePresence } from 'framer-motion';
-import { FaCheck, FaTrash } from 'react-icons/fa';
+import { FaCheck, FaTrash, FaPen, FaSave, FaTimes } from 'react-icons/fa';
+import Input from './ui/Input';
 
 const ProductList = () => {
   const [items, setItems] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [editingId, setEditingId] = useState(null);
+  const [editForm, setEditForm] = useState({ name: '', emoji: '' });
 
   useEffect(() => {
     const unsubscribe = subscribeToGroceries((data) => {
@@ -16,7 +19,7 @@ const ProductList = () => {
   }, []);
 
   const handleToggle = (item) => {
-    // Optimistic update could go here, but waiting for Firestore is usually fast enough
+    if (editingId === item.id) return; // Don't toggle if editing
     toggleGroceryItem(item.id, item.checked);
   };
 
@@ -25,6 +28,33 @@ const ProductList = () => {
     if(confirm('Remove this item?')) {
         removeGroceryItem(id);
     }
+  };
+
+  const startEdit = (e, item) => {
+    e.stopPropagation();
+    setEditingId(item.id);
+    setEditForm({ name: item.name, emoji: item.emoji });
+  };
+
+  const cancelEdit = (e) => {
+    if(e) e.stopPropagation();
+    setEditingId(null);
+  };
+
+  const saveEdit = async (e, item) => {
+    e.stopPropagation();
+    // 1. Update the item itself
+    await updateGroceryItem(item.id, {
+        name: editForm.name,
+        emoji: editForm.emoji
+    });
+
+    // 2. "Learn" the emoji preference if it changed
+    if (editForm.emoji !== item.emoji) {
+        await saveCustomEmoji(editForm.name, editForm.emoji);
+    }
+
+    setEditingId(null);
   };
 
   if (isLoading) {
@@ -64,51 +94,85 @@ const ProductList = () => {
                     display: 'flex', 
                     alignItems: 'center', 
                     justifyContent: 'space-between',
-                    cursor: 'pointer',
-                    opacity: item.checked ? 0.6 : 1,
+                    cursor: editingId === item.id ? 'default' : 'pointer',
+                    opacity: item.checked && editingId !== item.id ? 0.6 : 1,
                     backgroundColor: item.checked ? 'var(--bg-color)' : 'var(--surface-color)',
                     transition: 'all 0.2s ease',
-                    border: item.checked ? '1px solid transparent' : '1px solid transparent'
+                    border: '1px solid transparent'
                 }}
             >
-                <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-                    <div style={{ 
-                        width: '24px', 
-                        height: '24px', 
-                        borderRadius: '50%', 
-                        border: item.checked ? 'none' : '2px solid var(--text-secondary)',
-                        backgroundColor: item.checked ? 'var(--success-color)' : 'transparent',
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        color: 'white',
-                        fontSize: '12px',
-                        transition: 'all 0.2s ease'
-                    }}>
-                        {item.checked && <FaCheck />}
+                {editingId === item.id ? (
+                    <div style={{ display: 'flex', gap: '8px', width: '100%', alignItems: 'center' }} onClick={(e) => e.stopPropagation()}>
+                        <input 
+                            value={editForm.emoji}
+                            onChange={(e) => setEditForm({...editForm, emoji: e.target.value})}
+                            style={{ width: '40px', fontSize: '1.5rem', padding: '4px', borderRadius: '8px', border: '1px solid rgba(0,0,0,0.1)' }}
+                        />
+                        <input 
+                             value={editForm.name}
+                             onChange={(e) => setEditForm({...editForm, name: e.target.value})}
+                             style={{ flex: 1, fontSize: '1.1rem', padding: '8px', borderRadius: '8px', border: '1px solid rgba(0,0,0,0.1)', background: 'white' }}
+                             autoFocus
+                        />
+                         <button onClick={(e) => saveEdit(e, item)} style={{ color: 'var(--success-color)', padding: '8px' }}><FaSave size={18}/></button>
+                         <button onClick={cancelEdit} style={{ color: 'var(--text-secondary)', padding: '8px' }}><FaTimes size={18}/></button>
                     </div>
-                    <span style={{ 
-                        fontSize: '1.1rem', 
-                        textDecoration: item.checked ? 'line-through' : 'none',
-                        color: item.checked ? 'var(--text-secondary)' : 'var(--text-primary)'
-                    }}>
-                        {item.emoji} {item.name}
-                    </span>
-                </div>
-                
-                {item.checked && (
-                   <button 
-                        onClick={(e) => handleDelete(e, item.id)}
-                        style={{
-                            background: 'none',
-                            border: 'none',
-                            color: 'var(--text-secondary)',
-                            padding: '8px',
-                            cursor: 'pointer'
-                        }}
-                   >
-                       <FaTrash />
-                   </button>
+                ) : (
+                    <>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                            <div style={{ 
+                                width: '24px', 
+                                height: '24px', 
+                                borderRadius: '50%', 
+                                border: item.checked ? 'none' : '2px solid var(--text-secondary)',
+                                backgroundColor: item.checked ? 'var(--success-color)' : 'transparent',
+                                display: 'flex',
+                                alignItems: 'center',
+                                justifyContent: 'center',
+                                color: 'white',
+                                fontSize: '12px',
+                                transition: 'all 0.2s ease'
+                            }}>
+                                {item.checked && <FaCheck />}
+                            </div>
+                            <span style={{ 
+                                fontSize: '1.1rem', 
+                                textDecoration: item.checked ? 'line-through' : 'none',
+                                color: item.checked ? 'var(--text-secondary)' : 'var(--text-primary)'
+                            }}>
+                                {item.emoji} {item.name}
+                            </span>
+                        </div>
+                        
+                        <div style={{ display: 'flex', gap: '4px' }}>
+                            <button 
+                                onClick={(e) => startEdit(e, item)}
+                                style={{
+                                    background: 'none',
+                                    border: 'none',
+                                    color: 'var(--accent-color)',
+                                    padding: '8px',
+                                    cursor: 'pointer'
+                                }}
+                            >
+                                <FaPen />
+                            </button>
+                            {item.checked && (
+                            <button 
+                                    onClick={(e) => handleDelete(e, item.id)}
+                                    style={{
+                                        background: 'none',
+                                        border: 'none',
+                                        color: 'var(--text-secondary)',
+                                        padding: '8px',
+                                        cursor: 'pointer'
+                                    }}
+                            >
+                                <FaTrash />
+                            </button>
+                            )}
+                        </div>
+                    </>
                 )}
             </div>
           </motion.li>
