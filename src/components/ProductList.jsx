@@ -106,16 +106,53 @@ const ProductList = () => {
                         <input 
                             value={editForm.emoji}
                             onChange={(e) => setEditForm({...editForm, emoji: e.target.value})}
-                            style={{ width: '40px', fontSize: '1.5rem', padding: '4px', borderRadius: '8px', border: '1px solid rgba(0,0,0,0.1)' }}
+                            style={{ 
+                              width: '44px', 
+                              fontSize: '1.5rem', 
+                              padding: '8px', 
+                              borderRadius: 'var(--radius-md)', 
+                              border: 'none',
+                              backgroundColor: 'rgba(54, 54, 54, 0.59)',
+                              textAlign: 'center'
+                            }}
                         />
                         <input 
                              value={editForm.name}
                              onChange={(e) => setEditForm({...editForm, name: e.target.value})}
-                             style={{ flex: 1, fontSize: '16px', padding: '8px', borderRadius: '8px', border: '1px solid rgba(0,0,0,0.1)', background: 'white' }}
+                             style={{ 
+                               flex: 1, 
+                               fontSize: '16px', 
+                               padding: '10px', 
+                               borderRadius: 'var(--radius-md)', 
+                               border: 'none', 
+                               backgroundColor: 'rgba(54, 54, 54, 0.59)',
+                               color: 'var(--text-primary)',
+                               fontWeight: '500'
+                             }}
                              autoFocus
                         />
-                         <button onClick={(e) => saveEdit(e, item)} style={{ color: 'var(--success-color)', padding: '8px' }}><FaSave size={18}/></button>
-                         <button onClick={cancelEdit} style={{ color: 'var(--text-secondary)', padding: '8px' }}><FaTimes size={18}/></button>
+                         <button 
+                            onClick={(e) => saveEdit(e, item)} 
+                            style={{ 
+                                color: 'var(--success-color)', 
+                                padding: '10px', 
+                                backgroundColor: 'rgba(52, 199, 89, 0.1)', 
+                                borderRadius: 'var(--radius-md)' 
+                            }}
+                         >
+                            <FaSave size={18}/>
+                         </button>
+                         <button 
+                            onClick={cancelEdit} 
+                            style={{ 
+                                color: 'var(--text-secondary)', 
+                                padding: '10px',
+                                backgroundColor: 'rgba(206, 66, 41, 0.44)', 
+                                borderRadius: 'var(--radius-md)' 
+                            }}
+                         >
+                            <FaTimes size={18}/>
+                         </button>
                     </div>
                 ) : (
                     <>
