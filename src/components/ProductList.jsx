@@ -98,7 +98,8 @@ const ProductList = () => {
                     opacity: item.checked && editingId !== item.id ? 0.6 : 1,
                     backgroundColor: item.checked ? 'var(--bg-color)' : 'var(--surface-color)',
                     transition: 'all 0.2s ease',
-                    border: '1px solid transparent'
+                    border: '1px solid transparent',
+                    padding: 'var(--spacing-lg)'
                 }}
             >
                 {editingId === item.id ? (
@@ -159,8 +160,8 @@ const ProductList = () => {
                     <>
                         <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
                             <div style={{ 
-                                width: '24px', 
-                                height: '24px', 
+                                width: '28px', 
+                                height: '28px', 
                                 borderRadius: '50%', 
                                 border: item.checked ? 'none' : '2px solid var(--text-secondary)',
                                 backgroundColor: item.checked ? 'var(--success-color)' : 'transparent',
@@ -174,7 +175,7 @@ const ProductList = () => {
                                 {item.checked && <FaCheck />}
                             </div>
                             <span style={{ 
-                                fontSize: '1.1rem', 
+                                fontSize: '1.25rem', 
                                 textDecoration: item.checked ? 'line-through' : 'none',
                                 color: item.checked ? 'var(--text-secondary)' : 'var(--text-primary)'
                             }}>
