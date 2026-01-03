@@ -106,13 +106,14 @@ const ProductList = () => {
                         <input 
                             value={editForm.emoji}
                             onChange={(e) => setEditForm({...editForm, emoji: e.target.value})}
+                            onFocus={() => setEditForm(prev => ({...prev, emoji: ''}))}
                             style={{ 
                               width: '44px', 
                               fontSize: '1.5rem', 
                               padding: '8px', 
                               borderRadius: 'var(--radius-md)', 
                               border: 'none',
-                              backgroundColor: 'rgba(54, 54, 54, 0.59)',
+                              backgroundColor: 'rgba(0,0,0,0.03)',
                               textAlign: 'center'
                             }}
                         />
