@@ -16,11 +16,15 @@ export const subscribeToGroceries = (callback) => {
   });
 };
 
+// Helper to capitalize first letter
+const capitalize = (s) => s.charAt(0).toUpperCase() + s.slice(1);
+
 export const addGroceryItem = async (name) => {
   try {
-    const emoji = getEmojiForProduct(name);
+    const cleanName = capitalize(name.trim());
+    const emoji = getEmojiForProduct(cleanName);
     await addDoc(collection(db, COLLECTION_NAME), {
-      name,
+      name: cleanName,
       emoji,
       checked: false,
       createdAt: serverTimestamp()
@@ -40,7 +44,11 @@ export const toggleGroceryItem = async (id, currentStatus) => {
 
 export const updateGroceryItem = async (id, data) => {
   const itemRef = doc(db, COLLECTION_NAME, id);
-  await updateDoc(itemRef, data);
+  const updates = { ...data };
+  if (updates.name) {
+    updates.name = capitalize(updates.name.trim());
+  }
+  await updateDoc(itemRef, updates);
 };
 
 export const removeGroceryItem = async (id) => {
