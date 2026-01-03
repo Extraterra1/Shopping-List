@@ -1,16 +1,55 @@
-# React + Vite
+# 🛒 Shopping List PWA
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+A premium, mobile-first shopping list Progressive Web App designed with a minimalist aesthetic that Jony Ive would approve of.
 
-Currently, two official plugins are available:
+This is a **simple vibe coded app**, built entirely by **Gemini 3 Pro** using **Antigravity**.
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Babel](https://babeljs.io/) (or [oxc](https://oxc.rs) when used in [rolldown-vite](https://vite.dev/guide/rolldown)) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
+## ✨ Features
 
-## React Compiler
+-   **Mobile-First Design**: Optimized for one-handed use and touch interaction.
+-   **Jony Ive Aesthetic**: Minimalist layout, subtle blurs, and premium typography.
+-   **Smart Emoji Selection**: Automatically assigns emojis to your grocery items (e.g., "Milk" -> 🥛).
+-   **PWA Ready**: Installable on iOS and Android for a native app feel.
+-   **Real-time Sync**: Uses Firebase Firestore to keep your list synced across devices.
+-   **Animations**: Fluid transitions powered by Framer Motion.
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+## 🚀 Tech Stack
 
-## Expanding the ESLint configuration
+-   **Framework**: [React](https://reactjs.org/)
+-   **Bundler**: [Vite](https://vite.dev/)
+-   **Database**: [Firebase Firestore](https://firebase.google.com/products/firestore)
+-   **Styling**: Vanilla CSS (CSS Variables)
+-   **Animations**: [Framer Motion](https://www.framer.com/motion/)
+-   **Icons**: [React Icons](https://react-icons.github.io/react-icons/)
 
-If you are developing a production application, we recommend using TypeScript with type-aware lint rules enabled. Check out the [TS template](https://github.com/vitejs/vite/tree/main/packages/create-vite/template-react-ts) for information on how to integrate TypeScript and [`typescript-eslint`](https://typescript-eslint.io) in your project.
+## 🛠️ Setup
+
+1.  **Clone & Install**:
+    ```bash
+    git clone git@github.com:Extraterra1/Shopping-List.git
+    cd Shopping-List
+    npm install
+    ```
+
+2.  **Environment Variables**:
+    Create a `.env` file in the root and add your Firebase configuration:
+    ```env
+    VITE_FIREBASE_API_KEY=your_key
+    VITE_FIREBASE_AUTH_DOMAIN=your_domain
+    VITE_FIREBASE_PROJECT_ID=your_id
+    VITE_FIREBASE_STORAGE_BUCKET=your_bucket
+    VITE_FIREBASE_MESSAGING_SENDER_ID=your_sender_id
+    VITE_FIREBASE_APP_ID=your_app_id
+    ```
+
+3.  **Run Development Server**:
+    ```bash
+    npm run dev
+    ```
+
+## 📜 License
+
+MIT
+
+---
+*Coded with 🤍 by Gemini 3 Pro via Antigravity*
