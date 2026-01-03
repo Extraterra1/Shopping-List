@@ -1,7 +1,9 @@
-import { useState, useEffect } from 'react';
-import { subscribeToGroceries, toggleGroceryItem, removeGroceryItem, updateGroceryItem, saveCustomEmoji } from '../services/firestore';
-import { motion, AnimatePresence } from 'framer-motion';
+
+import { useState, useEffect, useRef } from 'react';
+import { subscribeToGroceries, toggleGroceryItem, removeGroceryItem, updateGroceryItem, saveCustomEmoji, updateGroceryOrder } from '../services/firestore';
+import { motion, AnimatePresence, Reorder } from 'framer-motion';
 import { FaCheck, FaTrash, FaPen, FaSave, FaTimes } from 'react-icons/fa';
+import { MdDragIndicator } from 'react-icons/md';
 import Input from './ui/Input';
 
 const ProductList = () => {
@@ -12,14 +14,17 @@ const ProductList = () => {
 
   useEffect(() => {
     const unsubscribe = subscribeToGroceries((data) => {
-      setItems(data);
-      setIsLoading(false);
+        // If we are currently dragging (or just reordered locally), we might have a conflict.
+        // But for simplicity, we'll accept server updates. 
+        // Real-time dnd with subscriptions can be tricky, but this is a simple personal app.
+        setItems(data);
+        setIsLoading(false);
     });
     return () => unsubscribe();
   }, []);
 
   const handleToggle = (item) => {
-    if (editingId === item.id) return; // Don't toggle if editing
+    if (editingId === item.id) return; 
     toggleGroceryItem(item.id, item.checked);
   };
 
@@ -57,6 +62,18 @@ const ProductList = () => {
     setEditingId(null);
   };
 
+  const handleReorder = (newOrder) => {
+      // mix new active order with existing completed items
+      const completed = items.filter(i => i.checked);
+      const combined = [...newOrder, ...completed];
+      
+      setItems(combined); // Optimistic update
+      
+      // Debounce or just save immediately? 
+      // For immediate feel, let's just save. Batch writing is cheap enough for this scale.
+      updateGroceryOrder(combined);
+  };
+
   if (isLoading) {
     return <div style={{ textAlign: 'center', padding: '20px', color: 'var(--text-secondary)' }}>Loading...</div>;
   }
@@ -69,40 +86,79 @@ const ProductList = () => {
     );
   }
 
-  // Sort: Unchecked first, then Checked
-  const sortedItems = [...items].sort((a, b) => (a.checked === b.checked ? 0 : a.checked ? 1 : -1));
+  const activeItems = items.filter(i => !i.checked);
+  const completedItems = items.filter(i => i.checked);
 
   return (
-    <ul style={{ listStyle: 'none', padding: 0 }}>
-      <AnimatePresence>
-        {sortedItems.map((item) => (
-          <motion.li
-            key={item.id}
-            initial={{ opacity: 0, y: 10 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, height: 0, marginBottom: 0 }}
-            layout
-            transition={{ duration: 0.2 }}
+    <div style={{ paddingBottom: '40px' }}>
+      {/* Active Items (Reorderable) */}
+      <Reorder.Group axis="y" values={activeItems} onReorder={handleReorder} style={{ listStyle: 'none', padding: 0 }}>
+        <AnimatePresence>
+            {activeItems.map((item) => (
+            <Item 
+                key={item.id} 
+                item={item} 
+                editingId={editingId}
+                editForm={editForm}
+                setEditForm={setEditForm}
+                handleToggle={handleToggle}
+                handleDelete={handleDelete}
+                startEdit={startEdit}
+                cancelEdit={cancelEdit}
+                saveEdit={saveEdit}
+            />
+            ))}
+        </AnimatePresence>
+      </Reorder.Group>
+
+      {/* Completed Items (Static) */}
+      {completedItems.length > 0 && (
+          <>
+            <h3 style={{ margin: '20px 0 10px', color: 'var(--text-secondary)', fontSize: '0.9rem', textTransform: 'uppercase', letterSpacing: '1px' }}>Completed</h3>
+            <ul style={{ listStyle: 'none', padding: 0 }}>
+                {completedItems.map((item) => (
+                    <Item 
+                        key={item.id} 
+                        item={item} 
+                        editingId={false} // Disable editing for completed items for simplicity, or keep it true
+                        editForm={editForm}
+                        setEditForm={setEditForm}
+                        handleToggle={handleToggle}
+                        handleDelete={handleDelete}
+                        startEdit={startEdit}
+                        cancelEdit={cancelEdit}
+                        saveEdit={saveEdit}
+                        isCompleted={true}
+                    />
+                ))}
+            </ul>
+          </>
+      )}
+    </div>
+  );
+};
+
+// Extracted Item component for cleanliness
+const Item = ({ item, editingId, editForm, setEditForm, handleToggle, handleDelete, startEdit, cancelEdit, saveEdit, isCompleted }) => {
+    const isEditing = editingId === item.id;
+    
+    const content = (
+        <div 
+            className="card"
+            onClick={() => !isEditing && handleToggle(item)}
             style={{ 
-                marginBottom: 'var(--spacing-sm)',
+                display: 'flex', 
+                alignItems: 'center', 
+                justifyContent: 'space-between',
+                cursor: isEditing ? 'default' : 'pointer',
+                opacity: isCompleted && !isEditing ? 0.6 : 1,
+                backgroundColor: item.checked ? 'var(--bg-color)' : 'var(--surface-color)',
+                transition: 'all 0.2s ease',
+                border: '1px solid transparent',
+                padding: 'var(--spacing-lg)'
             }}
-          >
-            <div 
-                className="card"
-                onClick={() => handleToggle(item)}
-                style={{ 
-                    display: 'flex', 
-                    alignItems: 'center', 
-                    justifyContent: 'space-between',
-                    cursor: editingId === item.id ? 'default' : 'pointer',
-                    opacity: item.checked && editingId !== item.id ? 0.6 : 1,
-                    backgroundColor: item.checked ? 'var(--bg-color)' : 'var(--surface-color)',
-                    transition: 'all 0.2s ease',
-                    border: '1px solid transparent',
-                    padding: 'var(--spacing-lg)'
-                }}
-            >
-                {editingId === item.id ? (
+        >
+             {isEditing ? (
                     <div style={{ display: 'flex', gap: '8px', width: '100%', alignItems: 'center' }} onClick={(e) => e.stopPropagation()}>
                         <input 
                             value={editForm.emoji}
@@ -127,7 +183,7 @@ const ProductList = () => {
                                padding: '10px', 
                                borderRadius: 'var(--radius-md)', 
                                border: 'none', 
-                               backgroundColor: 'rgba(54, 54, 54, 0.59)',
+                               backgroundColor: 'rgba(0,0,0,0.03)',
                                color: 'var(--text-primary)',
                                fontWeight: '500'
                              }}
@@ -149,7 +205,7 @@ const ProductList = () => {
                             style={{ 
                                 color: 'var(--text-secondary)', 
                                 padding: '10px',
-                                backgroundColor: 'rgba(206, 66, 41, 0.44)', 
+                                backgroundColor: 'rgba(0,0,0,0.05)',
                                 borderRadius: 'var(--radius-md)' 
                             }}
                          >
@@ -158,7 +214,14 @@ const ProductList = () => {
                     </div>
                 ) : (
                     <>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '12px', flex: 1 }}>
+                            {/* Drag Handle (Only for active items) */}
+                            {!isCompleted && (
+                                <div style={{ color: 'var(--text-secondary)', cursor: 'grab', display: 'flex', alignItems: 'center' }} onPointerDown={(e) => e.stopPropagation()}>
+                                    <MdDragIndicator size={20} style={{ opacity: 0.3 }} />
+                                </div>
+                            )}
+
                             <div style={{ 
                                 width: '28px', 
                                 height: '28px', 
@@ -170,14 +233,16 @@ const ProductList = () => {
                                 justifyContent: 'center',
                                 color: 'white',
                                 fontSize: '12px',
-                                transition: 'all 0.2s ease'
+                                transition: 'all 0.2s ease',
+                                flexShrink: 0
                             }}>
                                 {item.checked && <FaCheck />}
                             </div>
                             <span style={{ 
                                 fontSize: '1.25rem', 
-                                textDecoration: item.checked ? 'line-through' : 'none',
-                                color: item.checked ? 'var(--text-secondary)' : 'var(--text-primary)'
+                                textDecoration: isCompleted ? 'line-through' : 'none',
+                                color: isCompleted ? 'var(--text-secondary)' : 'var(--text-primary)',
+                                fontWeight: '500'
                             }}>
                                 {item.emoji} {item.name}
                             </span>
@@ -213,12 +278,29 @@ const ProductList = () => {
                         </div>
                     </>
                 )}
-            </div>
-          </motion.li>
-        ))}
-      </AnimatePresence>
-    </ul>
-  );
+        </div>
+    );
+
+    if (isCompleted) {
+        return (
+            <motion.li
+                layout
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                style={{ marginBottom: 'var(--spacing-sm)' }}
+            >
+                {content}
+            </motion.li>
+        )
+    }
+
+    return (
+        <Reorder.Item value={item} id={item.id} style={{ marginBottom: 'var(--spacing-sm)' }}>
+             {content}
+        </Reorder.Item>
+    );
 };
 
 export default ProductList;
+
