@@ -3,7 +3,6 @@ import { useState, useEffect, useRef } from 'react';
 import { subscribeToGroceries, toggleGroceryItem, removeGroceryItem, updateGroceryItem, saveCustomEmoji, updateGroceryOrder } from '../services/firestore';
 import { motion, AnimatePresence, Reorder } from 'framer-motion';
 import { FaCheck, FaTrash, FaPen, FaSave, FaTimes } from 'react-icons/fa';
-import { MdDragIndicator } from 'react-icons/md';
 import Input from './ui/Input';
 
 const ProductList = () => {
@@ -216,11 +215,7 @@ const Item = ({ item, editingId, editForm, setEditForm, handleToggle, handleDele
                     <>
                         <div style={{ display: 'flex', alignItems: 'center', gap: '12px', flex: 1 }}>
                             {/* Drag Handle (Only for active items) */}
-                            {!isCompleted && (
-                                <div style={{ color: 'var(--text-secondary)', cursor: 'grab', display: 'flex', alignItems: 'center' }} onPointerDown={(e) => e.stopPropagation()}>
-                                    <MdDragIndicator size={20} style={{ opacity: 0.3 }} />
-                                </div>
-                            )}
+
 
                             <div style={{ 
                                 width: '28px', 
