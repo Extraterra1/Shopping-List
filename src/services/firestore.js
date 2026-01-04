@@ -5,16 +5,16 @@ import { getEmojiForProduct } from '../utils/emoji';
 const COLLECTION_NAME = 'groceries';
 
 export const subscribeToGroceries = (callback) => {
-  // Sort by 'order' by default. 
+  // Sort by 'order' by default.
   // Note: New items will have high 'order' (Date.now()), so if we want them at top,
   // we might want descending?
   // User wants Drag & Drop. Usually Top = 0.
   // Let's use ascending sort.
   // We'll set new items to have a very small order (negative timestamp) to appear at top.
   const q = query(collection(db, COLLECTION_NAME), orderBy('order', 'asc'));
-  
+
   return onSnapshot(q, (snapshot) => {
-    const items = snapshot.docs.map(doc => ({
+    const items = snapshot.docs.map((doc) => ({
       id: doc.id,
       ...doc.data()
     }));
@@ -30,8 +30,8 @@ export const addGroceryItem = async (name) => {
     const cleanName = capitalize(name.trim());
     const emoji = getEmojiForProduct(cleanName);
     // Negative timestamp ensures new items appear at the top (smallest number) in ascending sort
-    const order = -Date.now(); 
-    
+    const order = -Date.now();
+
     await addDoc(collection(db, COLLECTION_NAME), {
       name: cleanName,
       emoji,
@@ -40,7 +40,7 @@ export const addGroceryItem = async (name) => {
       createdAt: serverTimestamp()
     });
   } catch (error) {
-    console.error("Error adding document: ", error);
+    console.error('Error adding document: ', error);
     throw error;
   }
 };
@@ -81,7 +81,7 @@ const CUSTOM_EMOJI_COLLECTION = 'custom_emojis';
 export const subscribeToCustomEmojis = (callback) => {
   return onSnapshot(collection(db, CUSTOM_EMOJI_COLLECTION), (snapshot) => {
     const emojis = {};
-    snapshot.docs.forEach(doc => {
+    snapshot.docs.forEach((doc) => {
       emojis[doc.id] = doc.data().emoji;
     });
     callback(emojis);
@@ -93,6 +93,6 @@ export const saveCustomEmoji = async (name, emoji) => {
   try {
     await setDoc(doc(db, CUSTOM_EMOJI_COLLECTION, docId), { emoji });
   } catch (error) {
-    console.error("Error saving custom emoji: ", error);
+    console.error('Error saving custom emoji: ', error);
   }
 };
