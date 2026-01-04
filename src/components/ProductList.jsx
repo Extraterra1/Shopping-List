@@ -196,7 +196,7 @@ const Item = ({ item, editingId, editForm, setEditForm, handleToggle, handleDele
               borderRadius: 'var(--radius-md)'
             }}
           >
-            <FaSave size={18} />
+            <FaSave size={20} />
           </button>
           <button
             onClick={cancelEdit}
@@ -207,7 +207,7 @@ const Item = ({ item, editingId, editForm, setEditForm, handleToggle, handleDele
               borderRadius: 'var(--radius-md)'
             }}
           >
-            <FaTimes size={18} />
+            <FaTimes size={20} />
           </button>
         </div>
       ) : (
@@ -256,7 +256,7 @@ const Item = ({ item, editingId, editForm, setEditForm, handleToggle, handleDele
                 cursor: 'pointer'
               }}
             >
-              <FaPen />
+              <FaPen size={20} />
             </button>
             {item.checked && (
               <button
@@ -269,7 +269,7 @@ const Item = ({ item, editingId, editForm, setEditForm, handleToggle, handleDele
                   cursor: 'pointer'
                 }}
               >
-                <FaTrash />
+                <FaTrash size={20} />
               </button>
             )}
           </div>
