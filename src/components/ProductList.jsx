@@ -1,8 +1,8 @@
 import { useState, useEffect, useRef } from 'react';
 import { subscribeToGroceries, toggleGroceryItem, removeGroceryItem, updateGroceryItem, saveCustomEmoji, updateGroceryOrder } from '../services/firestore';
 import styled from 'styled-components';
-import { motion, AnimatePresence, Reorder } from 'framer-motion';
-import { FaCheck, FaTrash, FaPen, FaSave, FaTimes } from 'react-icons/fa';
+import { motion, AnimatePresence, Reorder, useDragControls } from 'framer-motion';
+import { FaCheck, FaTrash, FaPen, FaSave, FaTimes, FaBars } from 'react-icons/fa';
 import Input from './ui/Input';
 
 const ProductList = () => {
@@ -138,6 +138,7 @@ const ProductList = () => {
 // Extracted Item component for cleanliness
 const Item = ({ item, editingId, editForm, setEditForm, handleToggle, handleDelete, startEdit, cancelEdit, saveEdit, isCompleted }) => {
   const isEditing = editingId === item.id;
+  const controls = useDragControls();
 
   const content = (
     <StyledCard className="card" onClick={() => !isEditing && handleToggle(item)} $isEditing={isEditing} $isCompleted={isCompleted} $checked={item.checked}>
@@ -160,6 +161,9 @@ const Item = ({ item, editingId, editForm, setEditForm, handleToggle, handleDele
         <>
           <ItemContentContainer>
             {/* Drag Handle (Only for active items) */}
+            <DragHandle onPointerDown={(e) => controls.start(e)}>
+              <FaBars />
+            </DragHandle>
             <Checkbox $checked={item.checked}>{item.checked && <FaCheck />}</Checkbox>
             <ItemText $isCompleted={isCompleted}>
               {item.emoji} {item.name}
@@ -190,7 +194,7 @@ const Item = ({ item, editingId, editForm, setEditForm, handleToggle, handleDele
   }
 
   return (
-    <StyledReorderItem value={item} id={item.id}>
+    <StyledReorderItem value={item} id={item.id} dragListener={false} dragControls={controls}>
       {content}
     </StyledReorderItem>
   );
@@ -326,8 +330,32 @@ const StyledMotionLi = styled(motion.li)`
   margin-bottom: var(--spacing-sm);
 `;
 
+const DragHandle = styled.div`
+  cursor: grab;
+  padding: 10px 5px;
+  color: var(--text-secondary);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  touch-action: none; /* Critical for dragging on touch devices */
+  opacity: 0.5;
+  transition: opacity 0.2s;
+
+  &:active {
+    cursor: grabbing;
+    opacity: 1;
+  }
+
+  @media (hover: hover) {
+    &:hover {
+      opacity: 0.8;
+    }
+  }
+`;
+
 const StyledReorderItem = styled(Reorder.Item)`
   margin-bottom: var(--spacing-sm);
+  touch-action: pan-y; /* Allow scrolling on the card body */
 `;
 
 export default ProductList;
