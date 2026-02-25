@@ -1,5 +1,5 @@
 import { initializeApp } from "firebase/app";
-import { connectFirestoreEmulator, getFirestore } from "firebase/firestore";
+import { connectFirestoreEmulator, getFirestore, initializeFirestore } from "firebase/firestore";
 
 // TODO: Replace with your Firebase project configuration
 const projectId = import.meta.env.VITE_FIREBASE_PROJECT_ID || "demo-shopping-list";
@@ -13,10 +13,17 @@ const firebaseConfig = {
 };
 
 const app = initializeApp(firebaseConfig);
-export const db = getFirestore(app);
+const useEmulator = import.meta.env.VITE_USE_FIRESTORE_EMULATOR === "true";
 
-if (import.meta.env.VITE_USE_FIRESTORE_EMULATOR === "true") {
-  const host = import.meta.env.VITE_FIRESTORE_EMULATOR_HOST || "127.0.0.1";
+export const db = useEmulator
+  ? initializeFirestore(app, {
+      experimentalAutoDetectLongPolling: true,
+      useFetchStreams: false
+    })
+  : getFirestore(app);
+
+if (useEmulator) {
+  const host = import.meta.env.VITE_FIRESTORE_EMULATOR_HOST || "localhost";
   const port = Number(import.meta.env.VITE_FIRESTORE_EMULATOR_PORT || "8080");
   connectFirestoreEmulator(db, host, port);
 }

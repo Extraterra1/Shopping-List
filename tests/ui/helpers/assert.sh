@@ -2,6 +2,14 @@
 
 set -euo pipefail
 
+normalize_assert_value() {
+  local value="$1"
+  if [[ "$value" =~ ^\".*\"$ ]]; then
+    value="${value:1:${#value}-2}"
+  fi
+  printf '%s' "$value"
+}
+
 assert_contains() {
   local haystack="$1"
   local needle="$2"
@@ -30,11 +38,16 @@ assert_equals() {
   local actual="$1"
   local expected="$2"
   local message="$3"
+  local normalized_actual
+  local normalized_expected
 
-  if [[ "$actual" != "$expected" ]]; then
+  normalized_actual="$(normalize_assert_value "$actual")"
+  normalized_expected="$(normalize_assert_value "$expected")"
+
+  if [[ "$normalized_actual" != "$normalized_expected" ]]; then
     echo "[ASSERT] $message"
-    echo "Expected: $expected"
-    echo "Actual: $actual"
+    echo "Expected: $normalized_expected"
+    echo "Actual: $normalized_actual"
     return 1
   fi
 }

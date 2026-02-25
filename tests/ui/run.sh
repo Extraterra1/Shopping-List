@@ -35,7 +35,10 @@ while [[ $# -gt 0 ]]; do
 done
 
 if [[ "${UI_EMULATOR_WRAPPED:-0}" != "1" && "${UI_SKIP_EMULATOR:-0}" != "1" ]]; then
-  escaped_args="$(printf '%q ' "${ORIGINAL_ARGS[@]}")"
+  escaped_args=""
+  if [[ "${#ORIGINAL_ARGS[@]}" -gt 0 ]]; then
+    escaped_args="$(printf '%q ' "${ORIGINAL_ARGS[@]}")"
+  fi
   exec firebase emulators:exec \
     --project "${UI_FIREBASE_PROJECT_ID:-demo-shopping-list}" \
     --only firestore \
@@ -44,6 +47,7 @@ fi
 
 trap 'stop_app_server; close_browser_session' EXIT
 
+init_ui_test_run "bootstrap"
 if ! start_app_server; then
   exit 1
 fi

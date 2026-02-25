@@ -6,17 +6,18 @@ import {
   doc,
   getDocs,
   getFirestore,
-  setDoc
+  setDoc,
+  terminate
 } from "firebase/firestore";
 
 const mode = process.argv[2];
-if (!mode || !["seed", "clean"].includes(mode)) {
-  console.error("Usage: node tests/ui/scripts/firestore-data.mjs <seed|clean>");
+if (!mode || !["seed", "clean", "reorder-active"].includes(mode)) {
+  console.error("Usage: node tests/ui/scripts/firestore-data.mjs <seed|clean|reorder-active>");
   process.exit(2);
 }
 
 const projectId = process.env.UI_FIREBASE_PROJECT_ID || "demo-shopping-list";
-const host = process.env.UI_FIRESTORE_EMULATOR_HOST || "127.0.0.1";
+const host = process.env.UI_FIRESTORE_EMULATOR_HOST || "localhost";
 const port = Number(process.env.UI_FIRESTORE_EMULATOR_PORT || "8080");
 
 const app = initializeApp({
@@ -36,6 +37,22 @@ const wipeCollection = async (name) => {
 const clean = async () => {
   await wipeCollection("groceries");
   await wipeCollection("custom_emojis");
+};
+
+const reorderActive = async () => {
+  await setDoc(doc(db, "groceries", "bread-active"), {
+    name: "Bread",
+    emoji: "🍞",
+    checked: false,
+    order: 0
+  });
+
+  await setDoc(doc(db, "groceries", "milk-active"), {
+    name: "Milk",
+    emoji: "🥛",
+    checked: false,
+    order: 1
+  });
 };
 
 const seedBaseline = async () => {
@@ -83,6 +100,12 @@ const run = async () => {
       return;
     }
 
+    if (mode === "reorder-active") {
+      await reorderActive();
+      console.log("[firestore-data] reordered active items (bread first)");
+      return;
+    }
+
     await clean();
     await seedBaseline();
     console.log("[firestore-data] seeded baseline groceries");
@@ -93,3 +116,4 @@ const run = async () => {
 };
 
 await run();
+await terminate(db);

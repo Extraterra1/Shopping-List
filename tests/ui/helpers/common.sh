@@ -40,10 +40,12 @@ init_ui_test_run() {
 }
 
 start_app_server() {
-  local log_file="$UI_RUN_ARTIFACT_DIR/dev-server.log"
+  local log_dir="${UI_RUN_ARTIFACT_DIR:-$ARTIFACTS_DIR/$UI_RUN_ID/bootstrap}"
+  mkdir -p "$log_dir"
+  local log_file="$log_dir/dev-server.log"
 
   VITE_USE_FIRESTORE_EMULATOR=true \
-  VITE_FIRESTORE_EMULATOR_HOST="${UI_FIRESTORE_EMULATOR_HOST:-127.0.0.1}" \
+  VITE_FIRESTORE_EMULATOR_HOST="${UI_FIRESTORE_EMULATOR_HOST:-localhost}" \
   VITE_FIRESTORE_EMULATOR_PORT="${UI_FIRESTORE_EMULATOR_PORT:-8080}" \
   VITE_FIREBASE_PROJECT_ID="${UI_FIREBASE_PROJECT_ID:-demo-shopping-list}" \
   npm run dev -- --host 127.0.0.1 --port "$UI_APP_PORT" > "$log_file" 2>&1 &
@@ -72,14 +74,14 @@ stop_app_server() {
 
 seed_test_data() {
   UI_FIREBASE_PROJECT_ID="${UI_FIREBASE_PROJECT_ID:-demo-shopping-list}" \
-  UI_FIRESTORE_EMULATOR_HOST="${UI_FIRESTORE_EMULATOR_HOST:-127.0.0.1}" \
+  UI_FIRESTORE_EMULATOR_HOST="${UI_FIRESTORE_EMULATOR_HOST:-localhost}" \
   UI_FIRESTORE_EMULATOR_PORT="${UI_FIRESTORE_EMULATOR_PORT:-8080}" \
   bash "$UI_DIR/scripts/seed.sh"
 }
 
 clean_test_data() {
   UI_FIREBASE_PROJECT_ID="${UI_FIREBASE_PROJECT_ID:-demo-shopping-list}" \
-  UI_FIRESTORE_EMULATOR_HOST="${UI_FIRESTORE_EMULATOR_HOST:-127.0.0.1}" \
+  UI_FIRESTORE_EMULATOR_HOST="${UI_FIRESTORE_EMULATOR_HOST:-localhost}" \
   UI_FIRESTORE_EMULATOR_PORT="${UI_FIRESTORE_EMULATOR_PORT:-8080}" \
   bash "$UI_DIR/scripts/clean.sh"
 }
