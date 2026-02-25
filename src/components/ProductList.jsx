@@ -8,25 +8,17 @@ import { useLanguage } from "../context/LanguageContext";
 
 const ProductList = ({ uid }) => {
   const { t } = useLanguage();
-  const [items, setItems] = useState([]);
-  const [isLoading, setIsLoading] = useState(true);
+  const [items, setItems] = useState(null);
   const [editingId, setEditingId] = useState(null);
   const [editForm, setEditForm] = useState({ name: '', emoji: '' });
 
   useEffect(() => {
     if (!uid) {
-      setItems([]);
-      setIsLoading(false);
-      return () => {};
+      return undefined;
     }
 
-    setIsLoading(true);
     const unsubscribe = subscribeToGroceries(uid, (data) => {
-      // If we are currently dragging (or just reordered locally), we might have a conflict.
-      // But for simplicity, we'll accept server updates.
-      // Real-time dnd with subscriptions can be tricky, but this is a simple personal app.
       setItems(data);
-      setIsLoading(false);
     });
     return () => unsubscribe();
   }, [uid]);
@@ -69,6 +61,10 @@ const ProductList = ({ uid }) => {
   };
 
   const handleReorder = (newOrder) => {
+    if (!items) {
+      return;
+    }
+
     // mix new active order with existing completed items
     const completed = items.filter((i) => i.checked);
     const combined = [...newOrder, ...completed];
@@ -80,7 +76,7 @@ const ProductList = ({ uid }) => {
     updateGroceryOrder(uid, combined);
   };
 
-  if (isLoading) {
+  if (!uid || items === null) {
     return <LoadingContainer data-testid="list-loading">{t("productList.loading")}</LoadingContainer>;
   }
 
