@@ -6,7 +6,8 @@ import {
   signInWithRedirect,
   signOut
 } from "firebase/auth";
-import { auth } from "../firebase";
+import { doc, getDoc, serverTimestamp, setDoc } from "firebase/firestore";
+import { auth, db } from "../firebase";
 
 const googleProvider = new GoogleAuthProvider();
 googleProvider.setCustomParameters({ prompt: "select_account" });
@@ -34,4 +35,25 @@ export const signInTestUser = async () => {
   const email = import.meta.env.VITE_TEST_USER_EMAIL || "ui-test@example.com";
   const password = import.meta.env.VITE_TEST_USER_PASSWORD || "ui-test-password";
   await signInWithEmailAndPassword(auth, email, password);
+};
+
+export const upsertUserProfile = async (user) => {
+  const profileRef = doc(db, "users", user.uid);
+  const profileData = {
+    displayName: user.displayName || "",
+    email: user.email || "",
+    photoURL: user.photoURL || "",
+    lastLoginAt: serverTimestamp()
+  };
+
+  const existing = await getDoc(profileRef);
+  if (existing.exists()) {
+    await setDoc(profileRef, profileData, { merge: true });
+    return;
+  }
+
+  await setDoc(profileRef, {
+    ...profileData,
+    createdAt: serverTimestamp()
+  });
 };

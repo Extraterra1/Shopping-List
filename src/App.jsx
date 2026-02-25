@@ -7,7 +7,8 @@ import {
   observeAuthState,
   signInTestUser,
   signInWithGoogleRedirect,
-  signOutCurrentUser
+  signOutCurrentUser,
+  upsertUserProfile
 } from "./services/auth";
 
 function App() {
@@ -23,6 +24,12 @@ function App() {
     });
 
     const unsubscribe = observeAuthState((currentUser) => {
+      if (currentUser) {
+        upsertUserProfile(currentUser).catch((error) => {
+          console.error("Failed to upsert user profile", error);
+        });
+      }
+
       setUser(currentUser);
       setIsAuthReady(true);
       setIsBusy(false);
