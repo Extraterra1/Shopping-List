@@ -14,8 +14,10 @@ const Input = ({ value, onChange, placeholder, type = 'text', autoFocus = false,
         padding: '16px',
         fontSize: '16px',
         borderRadius: 'var(--radius-lg)',
-        backgroundColor: 'rgba(0,0,0,0.03)',
+        border: '1px solid rgba(125, 125, 130, 0.45)',
+        backgroundColor: 'var(--surface-color)',
         color: 'var(--text-primary)',
+        boxShadow: 'inset 0 1px 0 rgba(255,255,255,0.28), 0 1px 3px rgba(0,0,0,0.08)',
       }}
     />
   );

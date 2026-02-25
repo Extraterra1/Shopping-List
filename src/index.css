@@ -79,6 +79,8 @@ input {
 
 input:focus {
   outline: none;
+  border-color: color-mix(in srgb, var(--accent-color) 45%, #8a8a8f);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent-color) 18%, transparent);
 }
 
 /* Utilities */
