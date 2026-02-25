@@ -3,6 +3,7 @@ import "./index.css";
 import AppShell from "./components/AppShell";
 import Onboarding from "./components/Onboarding";
 import {
+  initializeAuthPersistence,
   maybeHandleRedirectResult,
   observeAuthState,
   signInTestUser,
@@ -20,12 +21,43 @@ function App() {
   const [authError, setAuthError] = useState("");
 
   useEffect(() => {
-    maybeHandleRedirectResult().catch((error) => {
-      console.error("Failed to handle auth redirect result", error);
-      setAuthError("We couldn't complete sign-in. Please try again.");
-    });
+    let isMounted = true;
+    let hasResolvedRedirect = false;
+    let hasReceivedAuthState = false;
+
+    const markReady = () => {
+      if (!isMounted) {
+        return;
+      }
+
+      if (hasResolvedRedirect && hasReceivedAuthState) {
+        setIsAuthReady(true);
+        setIsBusy(false);
+      }
+    };
+
+    const initializeAuth = async () => {
+      try {
+        await initializeAuthPersistence();
+      } catch (error) {
+        console.error("Failed to initialize auth persistence", error);
+      }
+
+      try {
+        await maybeHandleRedirectResult();
+      } catch (error) {
+        console.error("Failed to handle auth redirect result", error);
+        const errorCode = error?.code ? ` (${error.code})` : "";
+        setAuthError(`We couldn't complete sign-in${errorCode}. Please try again.`);
+      } finally {
+        hasResolvedRedirect = true;
+        markReady();
+      }
+    };
 
     const unsubscribe = observeAuthState((currentUser) => {
+      hasReceivedAuthState = true;
+
       if (currentUser) {
         upsertUserProfile(currentUser).catch((error) => {
           console.error("Failed to upsert user profile", error);
@@ -33,11 +65,14 @@ function App() {
       }
 
       setUser(currentUser);
-      setIsAuthReady(true);
-      setIsBusy(false);
+      markReady();
     });
+    initializeAuth();
 
-    return () => unsubscribe();
+    return () => {
+      isMounted = false;
+      unsubscribe();
+    };
   }, []);
 
   useEffect(() => {

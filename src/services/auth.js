@@ -1,9 +1,12 @@
 import {
+  browserLocalPersistence,
   GoogleAuthProvider,
   getRedirectResult,
   onAuthStateChanged,
   signInWithEmailAndPassword,
+  signInWithPopup,
   signInWithRedirect,
+  setPersistence,
   signOut
 } from "firebase/auth";
 import { doc, getDoc, serverTimestamp, setDoc } from "firebase/firestore";
@@ -14,7 +17,26 @@ googleProvider.setCustomParameters({ prompt: "select_account" });
 
 export const observeAuthState = (callback) => onAuthStateChanged(auth, callback);
 
+export const initializeAuthPersistence = async () => {
+  await setPersistence(auth, browserLocalPersistence);
+};
+
 export const signInWithGoogleRedirect = async () => {
+  // Popup is more reliable for local desktop workflows; redirect is fallback.
+  try {
+    await signInWithPopup(auth, googleProvider);
+    return;
+  } catch (error) {
+    const redirectFallbackCodes = new Set([
+      "auth/popup-blocked",
+      "auth/operation-not-supported-in-this-environment"
+    ]);
+
+    if (!redirectFallbackCodes.has(error.code)) {
+      throw error;
+    }
+  }
+
   await signInWithRedirect(auth, googleProvider);
 };
 
