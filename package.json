@@ -7,7 +7,12 @@
     "dev": "vite --host",
     "build": "vite build",
     "lint": "eslint .",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "test:ui": "bash tests/ui/run.sh",
+    "test:ui:desktop": "bash tests/ui/run.sh --desktop",
+    "test:ui:mobile": "bash tests/ui/run.sh --mobile",
+    "test:ui:seed": "bash tests/ui/scripts/seed.sh",
+    "test:ui:clean": "bash tests/ui/scripts/clean.sh"
   },
   "dependencies": {
     "firebase": "^12.7.0",
