@@ -1,4 +1,5 @@
 import { initializeApp } from "firebase/app";
+import { connectAuthEmulator, getAuth } from "firebase/auth";
 import { connectFirestoreEmulator, getFirestore, initializeFirestore } from "firebase/firestore";
 
 // TODO: Replace with your Firebase project configuration
@@ -13,7 +14,10 @@ const firebaseConfig = {
 };
 
 const app = initializeApp(firebaseConfig);
+export const auth = getAuth(app);
+
 const useEmulator = import.meta.env.VITE_USE_FIRESTORE_EMULATOR === "true";
+const useAuthEmulator = import.meta.env.VITE_USE_AUTH_EMULATOR === "true";
 
 export const db = useEmulator
   ? initializeFirestore(app, {
@@ -26,4 +30,10 @@ if (useEmulator) {
   const host = import.meta.env.VITE_FIRESTORE_EMULATOR_HOST || "localhost";
   const port = Number(import.meta.env.VITE_FIRESTORE_EMULATOR_PORT || "8080");
   connectFirestoreEmulator(db, host, port);
+}
+
+if (useAuthEmulator) {
+  const host = import.meta.env.VITE_AUTH_EMULATOR_HOST || "localhost";
+  const port = Number(import.meta.env.VITE_AUTH_EMULATOR_PORT || "9099");
+  connectAuthEmulator(auth, `http://${host}:${port}`, { disableWarnings: true });
 }
