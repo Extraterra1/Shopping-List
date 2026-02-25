@@ -1,4 +1,5 @@
 import PropTypes from "prop-types";
+import { FcGoogle } from "react-icons/fc";
 import Button from "./ui/Button";
 
 const Onboarding = ({ onGoogleSignIn, onTestSignIn, loading, error }) => {
@@ -15,10 +16,17 @@ const Onboarding = ({ onGoogleSignIn, onTestSignIn, loading, error }) => {
             Each account has an independent list and custom emoji preferences. Your data is never shared with other users.
           </p>
           <Button
+            className="google-signin-button"
+            variant="secondary"
             onClick={onGoogleSignIn}
             disabled={loading}
+            icon={FcGoogle}
             aria-label="Continue with Google"
             data-testid="google-signin"
+            style={{
+              backgroundColor: "var(--surface-color)",
+              border: "1px solid rgba(125, 125, 130, 0.35)"
+            }}
           >
             Continue With Google
           </Button>

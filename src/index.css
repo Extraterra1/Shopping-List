@@ -126,3 +126,12 @@ input:focus {
 .card:active {
   transform: scale(0.98);
 }
+
+@media (hover: hover) and (pointer: fine) {
+  .google-signin-button:hover:not(:disabled) {
+    transform: translateY(-1px);
+    background-color: rgba(125, 125, 130, 0.1) !important;
+    border-color: rgba(125, 125, 130, 0.55) !important;
+    box-shadow: 0 6px 14px rgba(0, 0, 0, 0.12);
+  }
+}
