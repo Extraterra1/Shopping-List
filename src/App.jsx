@@ -31,17 +31,63 @@ function App() {
   useEffect(() => {
     let isMounted = true;
     let hasResolvedRedirect = false;
-    let hasReceivedAuthState = false;
+    let hasSettledInitialAuth = false;
+    let initialNullTimer = null;
 
     const markReady = () => {
       if (!isMounted) {
         return;
       }
 
-      if (hasResolvedRedirect && hasReceivedAuthState) {
+      if (hasResolvedRedirect && hasSettledInitialAuth) {
         setIsAuthReady(true);
         setIsBusy(false);
       }
+    };
+
+    const clearInitialNullTimer = () => {
+      if (initialNullTimer) {
+        clearTimeout(initialNullTimer);
+        initialNullTimer = null;
+      }
+    };
+
+    const applyUser = (currentUser, { isInitial = false } = {}) => {
+      if (!isMounted) {
+        return;
+      }
+
+      if (!currentUser) {
+        setUser(null);
+        if (isInitial) {
+          hasSettledInitialAuth = true;
+          markReady();
+        }
+        return;
+      }
+
+      upsertUserProfile(currentUser, { preferredLanguage: languageRef.current })
+        .then((profile) => {
+          const profileLanguage = profile?.language;
+          if (profileLanguage && profileLanguage !== languageRef.current) {
+            const resolved = setLanguage(profileLanguage);
+            languageRef.current = resolved;
+          }
+        })
+        .catch((error) => {
+          console.error("Failed to upsert user profile", error);
+        })
+        .finally(() => {
+          if (!isMounted) {
+            return;
+          }
+
+          setUser(currentUser);
+          if (isInitial) {
+            hasSettledInitialAuth = true;
+            markReady();
+          }
+        });
     };
 
     const initializeAuth = async () => {
@@ -67,34 +113,29 @@ function App() {
     };
 
     const unsubscribe = observeAuthState((currentUser) => {
-      hasReceivedAuthState = true;
-
-      if (!currentUser) {
-        setUser(null);
-        markReady();
+      if (hasSettledInitialAuth) {
+        applyUser(currentUser);
         return;
       }
 
-      upsertUserProfile(currentUser, { preferredLanguage: languageRef.current })
-        .then((profile) => {
-          const profileLanguage = profile?.language;
-          if (profileLanguage && profileLanguage !== languageRef.current) {
-            const resolved = setLanguage(profileLanguage);
-            languageRef.current = resolved;
-          }
-        })
-        .catch((error) => {
-          console.error("Failed to upsert user profile", error);
-        })
-        .finally(() => {
-          setUser(currentUser);
-          markReady();
-        });
+      if (currentUser) {
+        clearInitialNullTimer();
+        applyUser(currentUser, { isInitial: true });
+        return;
+      }
+
+      if (!initialNullTimer) {
+        initialNullTimer = setTimeout(() => {
+          initialNullTimer = null;
+          applyUser(null, { isInitial: true });
+        }, 250);
+      }
     });
     initializeAuth();
 
     return () => {
       isMounted = false;
+      clearInitialNullTimer();
       unsubscribe();
     };
   }, [setLanguage]);
@@ -176,9 +217,22 @@ function App() {
 
   if (!isAuthReady) {
     return (
-      <main>
-        <div className="container" style={{ paddingTop: "var(--spacing-xl)" }}>
-          <p className="subtitle" data-testid="auth-loading">{t("app.loadingSession")}</p>
+      <main data-testid="auth-loading">
+        <div className="container auth-skeleton-container">
+          <div className="auth-skeleton-card">
+            <div className="auth-skeleton-line auth-skeleton-line-title" />
+            <div className="auth-skeleton-line auth-skeleton-line-subtitle" />
+            <div className="auth-skeleton-line auth-skeleton-line-subtitle" />
+            <div className="auth-skeleton-button" />
+          </div>
+
+          <div className="auth-skeleton-list">
+            <div className="auth-skeleton-item" />
+            <div className="auth-skeleton-item" />
+            <div className="auth-skeleton-item" />
+          </div>
+
+          <p className="subtitle auth-skeleton-label">{t("app.loadingSession")}</p>
         </div>
       </main>
     );
