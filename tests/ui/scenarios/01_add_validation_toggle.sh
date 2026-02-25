@@ -37,7 +37,15 @@ assert_equals "$input_value" "" "Input should be cleared after successful add."
 ui_click_testid "item-card-bread-active"
 ab wait 500 >/dev/null
 
+bread_in_active_after_card_tap="$(ab eval 'String(document.querySelector("[data-testid=\"active-list\"]")?.innerText?.includes("Bread") ?? false)')"
+bread_in_completed_after_card_tap="$(ab eval 'String(document.querySelector("[data-testid=\"completed-list\"]")?.innerText?.includes("Bread") ?? false)')"
+assert_equals "$bread_in_active_after_card_tap" "true" "Bread should stay active when tapping the card."
+assert_equals "$bread_in_completed_after_card_tap" "false" "Bread should not move to completed when tapping the card."
+
+ui_click_testid "item-check-bread"
+ab wait 500 >/dev/null
+
 bread_in_active="$(ab eval 'String(document.querySelector("[data-testid=\"active-list\"]")?.innerText?.includes("Bread") ?? false)')"
 bread_in_completed="$(ab eval 'String(document.querySelector("[data-testid=\"completed-list\"]")?.innerText?.includes("Bread") ?? false)')"
-assert_equals "$bread_in_active" "false" "Bread should no longer appear in the active list after toggling."
-assert_equals "$bread_in_completed" "true" "Bread should move to the completed list after toggling."
+assert_equals "$bread_in_active" "false" "Bread should no longer appear in the active list after checkbox toggle."
+assert_equals "$bread_in_completed" "true" "Bread should move to the completed list after checkbox toggle."
