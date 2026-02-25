@@ -61,6 +61,12 @@ ui_click_testid() {
   ab find testid "$testid" click >/dev/null
 }
 
+ui_sign_out() {
+  ui_click_testid "account-menu-trigger"
+  ui_wait_for_testid "account-menu"
+  ui_click_testid "sign-out"
+}
+
 ui_fill_testid() {
   local testid="$1"
   local value="$2"

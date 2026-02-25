@@ -10,7 +10,7 @@ ui_open_app "${APP_URL:-http://127.0.0.1:4173}"
 
 has_shell="$(ab eval 'String(Boolean(document.querySelector("[data-testid=\"app-shell\"]")))')"
 if [[ "$has_shell" == "true" || "$has_shell" == "\"true\"" ]]; then
-  ui_click_testid "sign-out"
+  ui_sign_out
 fi
 
 ui_wait_for_testid "onboarding-screen"
@@ -28,7 +28,7 @@ ui_wait_for_testid "add-input"
 shell_visible_after_login="$(ab is visible "[data-testid=\"app-shell\"]")"
 assert_equals "$shell_visible_after_login" "true" "App shell should be visible after test login."
 
-ui_click_testid "sign-out"
+ui_sign_out
 ui_wait_for_testid "onboarding-screen"
 
 onboarding_after_signout="$(ab is visible "[data-testid=\"onboarding-screen\"]")"
