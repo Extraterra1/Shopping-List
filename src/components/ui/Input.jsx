@@ -1,6 +1,6 @@
 import PropTypes from 'prop-types';
 
-const Input = ({ value, onChange, placeholder, type = 'text', autoFocus = false }) => {
+const Input = ({ value, onChange, placeholder, type = 'text', autoFocus = false, ...rest }) => {
   return (
     <input
       type={type}
@@ -8,6 +8,7 @@ const Input = ({ value, onChange, placeholder, type = 'text', autoFocus = false 
       onChange={onChange}
       placeholder={placeholder}
       autoFocus={autoFocus}
+      {...rest}
       style={{
         width: '100%',
         padding: '16px',
@@ -26,6 +27,8 @@ Input.propTypes = {
   placeholder: PropTypes.string,
   type: PropTypes.string,
   autoFocus: PropTypes.bool,
+  'aria-label': PropTypes.string,
+  'data-testid': PropTypes.string,
 };
 
 export default Input;

@@ -1,9 +1,8 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect } from 'react';
 import { subscribeToGroceries, toggleGroceryItem, removeGroceryItem, updateGroceryItem, saveCustomEmoji, updateGroceryOrder } from '../services/firestore';
 import styled from 'styled-components';
 import { motion, AnimatePresence, Reorder, useDragControls } from 'framer-motion';
 import { FaCheck, FaTrash, FaPen, FaSave, FaTimes, FaBars } from 'react-icons/fa';
-import Input from './ui/Input';
 
 const ProductList = () => {
   const [items, setItems] = useState([]);
@@ -72,12 +71,12 @@ const ProductList = () => {
   };
 
   if (isLoading) {
-    return <LoadingContainer>Loading...</LoadingContainer>;
+    return <LoadingContainer data-testid="list-loading">Loading...</LoadingContainer>;
   }
 
   if (items.length === 0) {
     return (
-      <EmptyCard className="card">
+      <EmptyCard className="card" data-testid="list-empty">
         <EmptyText>Your list is empty. Add something!</EmptyText>
       </EmptyCard>
     );
@@ -87,9 +86,9 @@ const ProductList = () => {
   const completedItems = items.filter((i) => i.checked);
 
   return (
-    <ListWrapper>
+    <ListWrapper data-testid="product-list">
       {/* Active Items (Reorderable) */}
-      <StyledReorderGroup axis="y" values={activeItems} onReorder={handleReorder}>
+      <StyledReorderGroup axis="y" values={activeItems} onReorder={handleReorder} data-testid="active-list">
         <AnimatePresence>
           {activeItems.map((item) => (
             <Item
@@ -111,8 +110,8 @@ const ProductList = () => {
       {/* Completed Items (Static) */}
       {completedItems.length > 0 && (
         <>
-          <SectionHeader>Completed</SectionHeader>
-          <CompletedList>
+          <SectionHeader data-testid="completed-section">Completed</SectionHeader>
+          <CompletedList data-testid="completed-list">
             {completedItems.map((item) => (
               <Item
                 key={item.id}
@@ -139,21 +138,38 @@ const ProductList = () => {
 const Item = ({ item, editingId, editForm, setEditForm, handleToggle, handleDelete, startEdit, cancelEdit, saveEdit, isCompleted }) => {
   const isEditing = editingId === item.id;
   const controls = useDragControls();
+  const safeName = item.name?.toLowerCase().replace(/\s+/g, '-');
 
   const content = (
-    <StyledCard className="card" onClick={() => !isEditing && handleToggle(item)} $isEditing={isEditing} $isCompleted={isCompleted} $checked={item.checked}>
+    <StyledCard
+      className="card"
+      onClick={() => !isEditing && handleToggle(item)}
+      $isEditing={isEditing}
+      $isCompleted={isCompleted}
+      $checked={item.checked}
+      data-testid={`item-card-${item.id}`}
+      aria-label={`Grocery item ${item.name}`}
+    >
       {isEditing ? (
-        <EditFormContainer onClick={(e) => e.stopPropagation()}>
+        <EditFormContainer onClick={(e) => e.stopPropagation()} data-testid={`item-edit-form-${item.id}`}>
           <EmojiInput
             value={editForm.emoji}
             onChange={(e) => setEditForm({ ...editForm, emoji: e.target.value })}
             onFocus={() => setEditForm((prev) => ({ ...prev, emoji: '' }))}
+            data-testid={`edit-emoji-input-${safeName}`}
+            aria-label={`Edit emoji for ${item.name}`}
           />
-          <NameInput value={editForm.name} onChange={(e) => setEditForm({ ...editForm, name: e.target.value })} autoFocus />
-          <ActionButton onClick={(e) => saveEdit(e, item)} $variant="save">
+          <NameInput
+            value={editForm.name}
+            onChange={(e) => setEditForm({ ...editForm, name: e.target.value })}
+            autoFocus
+            data-testid={`edit-name-input-${safeName}`}
+            aria-label={`Edit name for ${item.name}`}
+          />
+          <ActionButton onClick={(e) => saveEdit(e, item)} $variant="save" aria-label={`Save ${item.name}`} data-testid={`save-edit-${safeName}`}>
             <FaSave size={20} />
           </ActionButton>
-          <ActionButton onClick={cancelEdit} $variant="cancel">
+          <ActionButton onClick={cancelEdit} $variant="cancel" aria-label={`Cancel editing ${item.name}`} data-testid={`cancel-edit-${safeName}`}>
             <FaTimes size={20} />
           </ActionButton>
         </EditFormContainer>
@@ -161,21 +177,39 @@ const Item = ({ item, editingId, editForm, setEditForm, handleToggle, handleDele
         <>
           <ItemContentContainer>
             {/* Drag Handle (Only for active items) */}
-            <DragHandle onPointerDown={(e) => controls.start(e)}>
+            <DragHandle
+              onPointerDown={(e) => controls.start(e)}
+              role="button"
+              tabIndex={0}
+              aria-label={`Reorder ${item.name}`}
+              data-testid={`drag-handle-${safeName}`}
+            >
               <FaBars />
             </DragHandle>
-            <Checkbox $checked={item.checked}>{item.checked && <FaCheck />}</Checkbox>
-            <ItemText $isCompleted={isCompleted}>
+            <Checkbox $checked={item.checked} data-testid={`item-check-${safeName}`}>
+              {item.checked && <FaCheck />}
+            </Checkbox>
+            <ItemText $isCompleted={isCompleted} data-testid={`item-text-${safeName}`}>
               {item.emoji} {item.name}
             </ItemText>
           </ItemContentContainer>
 
           <ActionsContainer>
-            <IconButton onClick={(e) => startEdit(e, item)} $variant="edit">
+            <IconButton
+              onClick={(e) => startEdit(e, item)}
+              $variant="edit"
+              aria-label={`Edit ${item.name}`}
+              data-testid={`edit-item-${safeName}`}
+            >
               <FaPen size={20} />
             </IconButton>
             {item.checked && (
-              <IconButton onClick={(e) => handleDelete(e, item.id)} $variant="delete">
+              <IconButton
+                onClick={(e) => handleDelete(e, item.id)}
+                $variant="delete"
+                aria-label={`Delete ${item.name}`}
+                data-testid={`delete-item-${safeName}`}
+              >
                 <FaTrash size={20} />
               </IconButton>
             )}
@@ -187,14 +221,14 @@ const Item = ({ item, editingId, editForm, setEditForm, handleToggle, handleDele
 
   if (isCompleted) {
     return (
-      <StyledMotionLi layout initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
+      <StyledMotionLi layout initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} data-testid={`completed-row-${item.id}`}>
         {content}
       </StyledMotionLi>
     );
   }
 
   return (
-    <StyledReorderItem value={item} id={item.id} dragListener={false} dragControls={controls}>
+    <StyledReorderItem value={item} id={item.id} dragListener={false} dragControls={controls} data-testid={`active-row-${item.id}`}>
       {content}
     </StyledReorderItem>
   );

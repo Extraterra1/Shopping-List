@@ -1,6 +1,16 @@
 import PropTypes from 'prop-types';
 
-const Button = ({ children, onClick, variant = 'primary', className = '', type = 'button', icon: Icon }) => {
+const Button = ({
+  children,
+  onClick,
+  variant = 'primary',
+  className = '',
+  type = 'button',
+  icon: Icon,
+  disabled = false,
+  style = {},
+  ...rest
+}) => {
   const baseStyles = {
     padding: '12px 24px',
     borderRadius: 'var(--radius-lg)',
@@ -11,7 +21,9 @@ const Button = ({ children, onClick, variant = 'primary', className = '', type =
     justifyContent: 'center',
     gap: '8px',
     width: '100%',
-    transition: 'transform 0.1s ease, background-color 0.2s ease'
+    transition: 'transform 0.1s ease, background-color 0.2s ease',
+    opacity: disabled ? 0.5 : 1,
+    cursor: disabled ? 'not-allowed' : 'pointer'
   };
 
   const variants = {
@@ -36,7 +48,14 @@ const Button = ({ children, onClick, variant = 'primary', className = '', type =
   };
 
   return (
-    <button type={type} onClick={onClick} style={{ ...baseStyles, ...variants[variant] }} className={className}>
+    <button
+      type={type}
+      onClick={onClick}
+      style={{ ...baseStyles, ...variants[variant], ...style }}
+      className={className}
+      disabled={disabled}
+      {...rest}
+    >
       {Icon && <Icon size={20} />}
       {children}
     </button>
@@ -49,7 +68,11 @@ Button.propTypes = {
   variant: PropTypes.oneOf(['primary', 'secondary', 'ghost', 'danger']),
   className: PropTypes.string,
   type: PropTypes.oneOf(['button', 'submit', 'reset']),
-  icon: PropTypes.elementType
+  icon: PropTypes.elementType,
+  disabled: PropTypes.bool,
+  style: PropTypes.object,
+  'aria-label': PropTypes.string,
+  'data-testid': PropTypes.string,
 };
 
 export default Button;

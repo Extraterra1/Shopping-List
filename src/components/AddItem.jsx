@@ -27,9 +27,23 @@ const AddItem = () => {
   return (
     <form onSubmit={handleSubmit} style={{ marginBottom: 'var(--spacing-lg)' }}>
       <div style={{ display: 'flex', gap: 'var(--spacing-sm)' }}>
-        <Input value={value} onChange={(e) => setValue(e.target.value)} placeholder="Add item (e.g., Milk)" />
+        <Input
+          value={value}
+          onChange={(e) => setValue(e.target.value)}
+          placeholder="Add item (e.g., Milk)"
+          aria-label="Add item"
+          data-testid="add-input"
+        />
         <div style={{ width: '60px' }}>
-          <Button type="submit" variant="primary" icon={FaPlus} disabled={loading || !value.trim()} style={{ height: '100%', padding: '0' }}></Button>
+          <Button
+            type="submit"
+            variant="primary"
+            icon={FaPlus}
+            disabled={loading || !value.trim()}
+            style={{ height: '100%', padding: '0' }}
+            aria-label="Add item to list"
+            data-testid="add-submit"
+          />
         </div>
       </div>
     </form>
