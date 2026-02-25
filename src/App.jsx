@@ -13,12 +13,53 @@ import {
 import { setCustomEmojiMap } from "./utils/emoji";
 
 const AppShell = lazy(() => import("./components/AppShell"));
+const LAST_AUTH_USER_KEY = "shopping_list_last_auth_user";
+const AUTH_REDIRECT_PENDING_KEY = "shopping_list_auth_redirect_pending";
+
+const getStoredFlag = (key) => {
+  if (typeof window === "undefined") {
+    return false;
+  }
+
+  try {
+    return window.localStorage.getItem(key) === "true";
+  } catch {
+    return false;
+  }
+};
+
+const setStoredFlag = (key, value) => {
+  if (typeof window === "undefined") {
+    return;
+  }
+
+  try {
+    window.localStorage.setItem(key, value ? "true" : "false");
+  } catch {
+    // Ignore storage failures in restricted browser modes.
+  }
+};
+
+const clearStoredFlag = (key) => {
+  if (typeof window === "undefined") {
+    return;
+  }
+
+  try {
+    window.localStorage.removeItem(key);
+  } catch {
+    // Ignore storage failures in restricted browser modes.
+  }
+};
 
 function App() {
   const { language, setLanguage, t } = useLanguage();
   const languageRef = useRef(language);
   const [user, setUser] = useState(null);
   const [isAuthReady, setIsAuthReady] = useState(false);
+  const [shouldGateAuth, setShouldGateAuth] = useState(
+    () => getStoredFlag(LAST_AUTH_USER_KEY) || getStoredFlag(AUTH_REDIRECT_PENDING_KEY)
+  );
   const [isBusy, setIsBusy] = useState(false);
   const [authError, setAuthError] = useState(null);
   const [languageErrorKey, setLanguageErrorKey] = useState("");
@@ -58,7 +99,9 @@ function App() {
 
       if (!currentUser) {
         setUser(null);
+        setStoredFlag(LAST_AUTH_USER_KEY, false);
         if (isInitial) {
+          setShouldGateAuth(false);
           hasSettledInitialAuth = true;
           markReady();
         }
@@ -85,6 +128,9 @@ function App() {
           }
 
           setUser(currentUser);
+          setStoredFlag(LAST_AUTH_USER_KEY, true);
+          clearStoredFlag(AUTH_REDIRECT_PENDING_KEY);
+          setShouldGateAuth(true);
           if (isInitial) {
             hasSettledInitialAuth = true;
             markReady();
@@ -109,6 +155,7 @@ function App() {
           vars: { code: errorCode }
         });
       } finally {
+        clearStoredFlag(AUTH_REDIRECT_PENDING_KEY);
         hasResolvedRedirect = true;
         markReady();
       }
@@ -177,9 +224,16 @@ function App() {
   const handleGoogleSignIn = async () => {
     setIsBusy(true);
     setAuthError(null);
+    setShouldGateAuth(true);
+    setStoredFlag(AUTH_REDIRECT_PENDING_KEY, true);
     try {
-      await signInWithGoogleRedirect();
+      const signInMode = await signInWithGoogleRedirect();
+      if (signInMode === "popup") {
+        clearStoredFlag(AUTH_REDIRECT_PENDING_KEY);
+      }
     } catch (error) {
+      clearStoredFlag(AUTH_REDIRECT_PENDING_KEY);
+      setShouldGateAuth(getStoredFlag(LAST_AUTH_USER_KEY));
       console.error("Google sign-in failed", error);
       setAuthError({ key: "errors.googleSignInFailed" });
       setIsBusy(false);
@@ -206,6 +260,9 @@ function App() {
     setLanguageErrorKey("");
     try {
       await signOutCurrentUser();
+      setStoredFlag(LAST_AUTH_USER_KEY, false);
+      clearStoredFlag(AUTH_REDIRECT_PENDING_KEY);
+      setShouldGateAuth(false);
     } catch (error) {
       console.error("Sign-out failed", error);
       setAuthError({ key: "errors.signOutFailed" });
@@ -234,7 +291,25 @@ function App() {
     }
   };
 
+  const authErrorMessage = authError
+    ? authError.raw || t(authError.key, authError.vars)
+    : "";
+
+  const onboardingScreen = (
+    <Onboarding
+      onGoogleSignIn={handleGoogleSignIn}
+      onTestSignIn={handleTestSignIn}
+      onLanguageChange={handleLanguageChange}
+      loading={isBusy}
+      error={authErrorMessage}
+    />
+  );
+
   if (!isAuthReady) {
+    if (!shouldGateAuth) {
+      return onboardingScreen;
+    }
+
     return (
       <main data-testid="auth-loading">
         <div className="container auth-skeleton-container">
@@ -257,20 +332,8 @@ function App() {
     );
   }
 
-  const authErrorMessage = authError
-    ? authError.raw || t(authError.key, authError.vars)
-    : "";
-
   if (!user) {
-    return (
-      <Onboarding
-        onGoogleSignIn={handleGoogleSignIn}
-        onTestSignIn={handleTestSignIn}
-        onLanguageChange={handleLanguageChange}
-        loading={isBusy}
-        error={authErrorMessage}
-      />
-    );
+    return onboardingScreen;
   }
 
   return (

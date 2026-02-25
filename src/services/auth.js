@@ -9,7 +9,7 @@ import {
   setPersistence,
   signOut
 } from "firebase/auth";
-import { auth } from "../firebase";
+import { auth } from "../firebaseAuth";
 
 const googleProvider = new GoogleAuthProvider();
 googleProvider.setCustomParameters({ prompt: "select_account" });
@@ -24,7 +24,7 @@ export const signInWithGoogleRedirect = async () => {
   // Popup is more reliable for local desktop workflows; redirect is fallback.
   try {
     await signInWithPopup(auth, googleProvider);
-    return;
+    return "popup";
   } catch (error) {
     const redirectFallbackCodes = new Set([
       "auth/popup-blocked",
@@ -37,6 +37,7 @@ export const signInWithGoogleRedirect = async () => {
   }
 
   await signInWithRedirect(auth, googleProvider);
+  return "redirect";
 };
 
 export const maybeHandleRedirectResult = async () => {

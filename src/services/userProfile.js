@@ -1,5 +1,5 @@
 import { doc, getDoc, serverTimestamp, setDoc } from "firebase/firestore";
-import { db } from "../firebase";
+import { db } from "../firebaseDb";
 import { isSupportedLanguage, normalizeLanguage } from "../i18n/language";
 
 const resolveLanguageForProfile = (existingLanguage, preferredLanguage, overrideLanguage) => {
