@@ -229,8 +229,14 @@ input:focus {
   text-transform: uppercase;
   letter-spacing: 0.1em;
   font-weight: 700;
-  color: var(--accent-color);
+  color: #0058b8;
   margin-bottom: var(--spacing-sm);
+}
+
+@media (prefers-color-scheme: dark) {
+  .onboarding-eyebrow {
+    color: #69b7ff;
+  }
 }
 
 .onboarding-title {
