@@ -1,6 +1,5 @@
-import { useEffect, useRef, useState } from "react";
+import { lazy, Suspense, useEffect, useRef, useState } from "react";
 import "./index.css";
-import AppShell from "./components/AppShell";
 import Onboarding from "./components/Onboarding";
 import { useLanguage } from "./context/LanguageContext";
 import {
@@ -9,11 +8,11 @@ import {
   observeAuthState,
   signInTestUser,
   signInWithGoogleRedirect,
-  signOutCurrentUser,
-  upsertUserProfile
+  signOutCurrentUser
 } from "./services/auth";
-import { subscribeToCustomEmojis } from "./services/firestore";
 import { setCustomEmojiMap } from "./utils/emoji";
+
+const AppShell = lazy(() => import("./components/AppShell"));
 
 function App() {
   const { language, setLanguage, t } = useLanguage();
@@ -66,7 +65,10 @@ function App() {
         return;
       }
 
-      upsertUserProfile(currentUser, { preferredLanguage: languageRef.current })
+      import("./services/userProfile")
+        .then(({ upsertUserProfile }) =>
+          upsertUserProfile(currentUser, { preferredLanguage: languageRef.current })
+        )
         .then((profile) => {
           const profileLanguage = profile?.language;
           if (profileLanguage && profileLanguage !== languageRef.current) {
@@ -146,12 +148,28 @@ function App() {
       return () => {};
     }
 
-    const unsubscribe = subscribeToCustomEmojis(user.uid, (map) => {
-      setCustomEmojiMap(map);
-    });
+    let active = true;
+    let unsubscribe = null;
+
+    import("./services/firestore")
+      .then(({ subscribeToCustomEmojis }) => {
+        if (!active) {
+          return;
+        }
+
+        unsubscribe = subscribeToCustomEmojis(user.uid, (map) => {
+          setCustomEmojiMap(map);
+        });
+      })
+      .catch((error) => {
+        console.error("Failed to load emoji subscriptions", error);
+      });
 
     return () => {
-      unsubscribe();
+      active = false;
+      if (unsubscribe) {
+        unsubscribe();
+      }
       setCustomEmojiMap({});
     };
   }, [user?.uid]);
@@ -205,6 +223,7 @@ function App() {
     }
 
     try {
+      const { upsertUserProfile } = await import("./services/userProfile");
       await upsertUserProfile(user, {
         preferredLanguage: resolvedLanguage,
         overrideLanguage: true
@@ -255,12 +274,14 @@ function App() {
   }
 
   return (
-    <AppShell
-      user={user}
-      onSignOut={handleSignOut}
-      onLanguageChange={handleLanguageChange}
-      languageError={languageErrorKey ? t(languageErrorKey) : ""}
-    />
+    <Suspense fallback={<main data-testid="app-shell-loading" />}>
+      <AppShell
+        user={user}
+        onSignOut={handleSignOut}
+        onLanguageChange={handleLanguageChange}
+        languageError={languageErrorKey ? t(languageErrorKey) : ""}
+      />
+    </Suspense>
   );
 }
 
