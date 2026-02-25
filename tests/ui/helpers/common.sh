@@ -44,6 +44,16 @@ start_app_server() {
   mkdir -p "$log_dir"
   local log_file="$log_dir/dev-server.log"
 
+  if command -v lsof >/dev/null 2>&1; then
+    local stale_pids
+    stale_pids="$(lsof -ti tcp:"$UI_APP_PORT" || true)"
+    if [[ -n "$stale_pids" ]]; then
+      # Clear stale dev servers so tests always hit the intended app instance.
+      kill $stale_pids >/dev/null 2>&1 || true
+      sleep 1
+    fi
+  fi
+
   VITE_USE_FIRESTORE_EMULATOR=true \
   VITE_FIRESTORE_EMULATOR_HOST="${UI_FIRESTORE_EMULATOR_HOST:-localhost}" \
   VITE_FIRESTORE_EMULATOR_PORT="${UI_FIRESTORE_EMULATOR_PORT:-8080}" \
@@ -54,7 +64,7 @@ start_app_server() {
   VITE_TEST_USER_EMAIL="${UI_TEST_USER_EMAIL:-ui-test@example.com}" \
   VITE_TEST_USER_PASSWORD="${UI_TEST_USER_PASSWORD:-ui-test-password}" \
   VITE_FIREBASE_PROJECT_ID="${UI_FIREBASE_PROJECT_ID:-demo-shopping-list}" \
-  npm run dev -- --host 127.0.0.1 --port "$UI_APP_PORT" > "$log_file" 2>&1 &
+  npm run dev -- --host 127.0.0.1 --port "$UI_APP_PORT" --strictPort > "$log_file" 2>&1 &
 
   UI_DEV_SERVER_PID=$!
 
