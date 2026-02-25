@@ -66,6 +66,33 @@ This is a **simple vibe coded app**, built entirely by **Gemini 3 Pro** using **
     npm run dev
     ```
 
+## 🧭 How To Use (Add Items To Your List)
+
+### 1. Open the app and sign in
+When you first open the app, you land on the onboarding screen. Sign in with Google to access your private list.
+
+![Landing page](docs/screenshots/landing-page.png)
+
+### 2. Add a new item
+Use the input field at the top of the list and tap the `+` button.
+
+Example:
+1. Type `milk`
+2. Tap `+`
+3. The item appears in your active list with an auto-selected emoji
+
+### 3. Mark items complete or keep them active
+Tap the checkbox to move an item between active and completed sections.
+
+In this example, some items are active and one is completed:
+
+![Shopping list with checked and unchecked items](docs/screenshots/shopping-list-overview.png)
+
+### 4. Edit an item
+Tap the edit icon on an active item to change its name or emoji, then save.
+
+![Edit item flow](docs/screenshots/edit-item.png)
+
 ## 🔐 Security Notes
 
 - `VITE_E2E_AUTH_BYPASS` is intended for automated UI tests only.
