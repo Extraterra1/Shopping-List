@@ -4,16 +4,27 @@ import Button from "./ui/Button";
 
 const Onboarding = ({ onGoogleSignIn, onTestSignIn, loading, error }) => {
   return (
-    <main data-testid="onboarding-screen">
-      <div className="container" style={{ paddingTop: "var(--spacing-xl)" }}>
-        <header style={{ marginBottom: "var(--spacing-xl)" }}>
-          <h1 className="title">Groceries</h1>
-          <p className="subtitle">Sign in to keep your shopping list private and synced.</p>
-        </header>
+    <main className="onboarding-root" data-testid="onboarding-screen">
+      <div className="container onboarding-container">
+        <section className="card onboarding-hero">
+          <p className="onboarding-eyebrow">Private by Default</p>
+          <h1 className="onboarding-title">Groceries That Stay Organized Without the Mess.</h1>
+          <p className="onboarding-description">
+            Build your list fast, keep custom emojis per item, and sync instantly between devices.
+            Every account has its own private list and preferences.
+          </p>
+          <div className="onboarding-tags" aria-hidden="true">
+            <span>Fast Add</span>
+            <span>Live Sync</span>
+            <span>Per-User Lists</span>
+          </div>
+        </section>
 
-        <section className="card" style={{ marginBottom: "var(--spacing-lg)" }}>
-          <p style={{ color: "var(--text-secondary)", marginBottom: "var(--spacing-md)" }}>
-            Each account has an independent list and custom emoji preferences. Your data is never shared with other users.
+        <section className="card onboarding-auth-card">
+          <p className="onboarding-cta-kicker">Get started</p>
+          <h2 className="onboarding-cta-title">Continue With Your Google Account</h2>
+          <p className="onboarding-cta-description">
+            Sign in now and start tracking what you need to buy, edit, and complete in one place.
           </p>
           <Button
             className="google-signin-button"
@@ -47,7 +58,7 @@ const Onboarding = ({ onGoogleSignIn, onTestSignIn, loading, error }) => {
         </section>
 
         {error ? (
-          <p data-testid="auth-error" style={{ color: "var(--danger-color)" }}>
+          <p className="onboarding-auth-error" data-testid="auth-error">
             {error}
           </p>
         ) : null}
