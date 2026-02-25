@@ -1,33 +1,96 @@
-import { useState, useEffect } from 'react'
-import './index.css'
-import AddItem from './components/AddItem'
-import ProductList from './components/ProductList'
-import { subscribeToCustomEmojis } from './services/firestore'
-import { setCustomEmojiMap } from './utils/emoji'
+import { useEffect, useState } from "react";
+import "./index.css";
+import AppShell from "./components/AppShell";
+import Onboarding from "./components/Onboarding";
+import {
+  maybeHandleRedirectResult,
+  observeAuthState,
+  signInTestUser,
+  signInWithGoogleRedirect,
+  signOutCurrentUser
+} from "./services/auth";
 
 function App() {
+  const [user, setUser] = useState(null);
+  const [isAuthReady, setIsAuthReady] = useState(false);
+  const [isBusy, setIsBusy] = useState(false);
+  const [authError, setAuthError] = useState("");
+
   useEffect(() => {
-    // Load custom emoji preferences
-    const unsubscribe = subscribeToCustomEmojis((map) => {
-      setCustomEmojiMap(map);
+    maybeHandleRedirectResult().catch((error) => {
+      console.error("Failed to handle auth redirect result", error);
+      setAuthError("We couldn't complete sign-in. Please try again.");
     });
+
+    const unsubscribe = observeAuthState((currentUser) => {
+      setUser(currentUser);
+      setIsAuthReady(true);
+      setIsBusy(false);
+    });
+
     return () => unsubscribe();
   }, []);
 
+  const handleGoogleSignIn = async () => {
+    setIsBusy(true);
+    setAuthError("");
+    try {
+      await signInWithGoogleRedirect();
+    } catch (error) {
+      console.error("Google sign-in failed", error);
+      setAuthError("Google sign-in failed. Please try again.");
+      setIsBusy(false);
+    }
+  };
+
+  const handleTestSignIn = async () => {
+    setIsBusy(true);
+    setAuthError("");
+    try {
+      await signInTestUser();
+    } catch (error) {
+      console.error("Test sign-in failed", error);
+      setAuthError(error.message || "Test sign-in failed.");
+      setIsBusy(false);
+    }
+  };
+
+  const handleSignOut = async () => {
+    setIsBusy(true);
+    setAuthError("");
+    try {
+      await signOutCurrentUser();
+    } catch (error) {
+      console.error("Sign-out failed", error);
+      setAuthError("Sign-out failed. Please try again.");
+      setIsBusy(false);
+    }
+  };
+
+  if (!isAuthReady) {
+    return (
+      <main>
+        <div className="container" style={{ paddingTop: "var(--spacing-xl)" }}>
+          <p className="subtitle" data-testid="auth-loading">Loading your session...</p>
+        </div>
+      </main>
+    );
+  }
+
+  if (!user) {
+    return (
+      <Onboarding
+        onGoogleSignIn={handleGoogleSignIn}
+        onTestSignIn={handleTestSignIn}
+        loading={isBusy}
+        error={authError}
+      />
+    );
+  }
+
   return (
-    <main>
-      <div className="container">
-        <header style={{ marginBottom: 'var(--spacing-xl)', paddingTop: 'var(--spacing-lg)' }}>
-          <h1 className="title">Groceries</h1>
-          <p className="subtitle">Your mobile shopping list</p>
-        </header>
-        
-        <AddItem />
-        <ProductList />
-        
-      </div>
-    </main>
-  )
+    <AppShell user={user} onSignOut={handleSignOut} />
+  );
 }
 
-export default App
+export default App;
