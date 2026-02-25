@@ -58,6 +58,22 @@ body {
   -webkit-tap-highlight-color: transparent;
 }
 
+@media (max-width: 768px) {
+  body {
+    background:
+      linear-gradient(
+        to bottom,
+        #000 0,
+        #000 calc(env(safe-area-inset-top) + 24px),
+        rgba(0, 0, 0, 0.72) calc(env(safe-area-inset-top) + 64px),
+        rgba(0, 0, 0, 0) 220px
+      ),
+      radial-gradient(circle at 18% 12%, rgba(0, 113, 227, 0.12), transparent 42%),
+      radial-gradient(circle at 85% 0%, rgba(52, 199, 89, 0.1), transparent 35%),
+      var(--bg-color);
+  }
+}
+
 #root {
   max-width: 600px; /* Mobile focused max width */
   margin: 0 auto;
