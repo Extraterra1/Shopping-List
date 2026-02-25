@@ -143,7 +143,6 @@ const Item = ({ item, editingId, editForm, setEditForm, handleToggle, handleDele
   const content = (
     <StyledCard
       className="card"
-      onClick={() => !isEditing && handleToggle(item)}
       $isEditing={isEditing}
       $isCompleted={isCompleted}
       $checked={item.checked}
@@ -186,7 +185,16 @@ const Item = ({ item, editingId, editForm, setEditForm, handleToggle, handleDele
             >
               <FaBars />
             </DragHandle>
-            <Checkbox $checked={item.checked} data-testid={`item-check-${safeName}`}>
+            <Checkbox
+              type="button"
+              onClick={(e) => {
+                e.stopPropagation();
+                handleToggle(item);
+              }}
+              aria-label={`Toggle ${item.name}`}
+              $checked={item.checked}
+              data-testid={`item-check-${safeName}`}
+            >
               {item.checked && <FaCheck />}
             </Checkbox>
             <ItemText $isCompleted={isCompleted} data-testid={`item-text-${safeName}`}>
@@ -275,7 +283,7 @@ const StyledCard = styled.div`
   display: flex;
   align-items: center;
   justify-content: space-between;
-  cursor: ${(props) => (props.$isEditing ? 'default' : 'pointer')};
+  cursor: default;
   opacity: ${(props) => (props.$isCompleted && !props.$isEditing ? 0.6 : 1)};
   background-color: ${(props) => (props.$checked ? 'var(--bg-color)' : 'var(--surface-color)')};
   transition: all 0.2s ease;
@@ -325,7 +333,7 @@ const ItemContentContainer = styled.div`
   flex: 1;
 `;
 
-const Checkbox = styled.div`
+const Checkbox = styled.button`
   width: 28px;
   height: 28px;
   border-radius: 50%;
@@ -338,6 +346,7 @@ const Checkbox = styled.div`
   font-size: 12px;
   transition: all 0.2s ease;
   flex-shrink: 0;
+  padding: 0;
 `;
 
 const ItemText = styled.span`
