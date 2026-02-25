@@ -45,8 +45,8 @@
 body {
   font-family: var(--font-family);
   background:
-    radial-gradient(circle at 18% 12%, rgba(0, 113, 227, 0.12), transparent 42%),
-    radial-gradient(circle at 85% 0%, rgba(52, 199, 89, 0.1), transparent 35%),
+    radial-gradient(circle at 20% 10%, rgba(0, 113, 227, 0.26), transparent 50%),
+    radial-gradient(circle at 88% 0%, rgba(52, 199, 89, 0.2), transparent 42%),
     var(--bg-color);
   color: var(--text-primary);
   -webkit-font-smoothing: antialiased;
@@ -64,14 +64,17 @@ body {
       linear-gradient(
         to bottom,
         #000 0,
-        #000 calc(env(safe-area-inset-top) + 24px),
-        rgba(0, 0, 0, 0.72) calc(env(safe-area-inset-top) + 64px),
-        rgba(0, 0, 0, 0) 220px
+        #000 calc(env(safe-area-inset-top) + 48px),
+        rgba(0, 0, 0, 0.72) calc(env(safe-area-inset-top) + 120px),
+        rgba(0, 0, 0, 0.42) 42%,
+        rgba(0, 0, 0, 0.2) 100%
       ),
-      radial-gradient(circle at 18% 12%, rgba(0, 113, 227, 0.12), transparent 42%),
-      radial-gradient(circle at 85% 0%, rgba(52, 199, 89, 0.1), transparent 35%),
+      radial-gradient(circle at 18% 10%, rgba(0, 113, 227, 0.48), transparent 58%),
+      radial-gradient(circle at 88% 0%, rgba(52, 199, 89, 0.36), transparent 52%),
+      radial-gradient(circle at 50% 85%, rgba(0, 119, 237, 0.14), transparent 48%),
       var(--bg-color);
   }
+
 }
 
 #root {
@@ -156,6 +159,12 @@ input:focus {
   padding-top: clamp(20px, 7vh, 56px);
   display: grid;
   gap: var(--spacing-md);
+}
+
+@media (max-width: 768px) {
+  .onboarding-container {
+    padding-top: clamp(8px, 3.5vh, 20px);
+  }
 }
 
 .onboarding-language-menu-wrap {
