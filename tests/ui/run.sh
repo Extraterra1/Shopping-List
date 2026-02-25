@@ -11,6 +11,7 @@ source "$HELPERS_DIR/common.sh"
 
 TARGET="all"
 SCENARIO_FILTER="${UI_SCENARIO_FILTER:-}"
+ORIGINAL_ARGS=("$@")
 
 while [[ $# -gt 0 ]]; do
   case "$1" in
@@ -33,9 +34,22 @@ while [[ $# -gt 0 ]]; do
   esac
 done
 
+if [[ "${UI_EMULATOR_WRAPPED:-0}" != "1" && "${UI_SKIP_EMULATOR:-0}" != "1" ]]; then
+  escaped_args="$(printf '%q ' "${ORIGINAL_ARGS[@]}")"
+  exec firebase emulators:exec \
+    --project "${UI_FIREBASE_PROJECT_ID:-demo-shopping-list}" \
+    --only firestore \
+    "UI_EMULATOR_WRAPPED=1 UI_FIREBASE_PROJECT_ID=${UI_FIREBASE_PROJECT_ID:-demo-shopping-list} bash tests/ui/run.sh ${escaped_args}"
+fi
+
 init_ui_test_run "$TARGET"
 log_info "Running UI scenarios for target: $TARGET"
 log_info "Artifacts: $UI_RUN_ARTIFACT_DIR"
+trap 'stop_app_server; close_browser_session' EXIT
+
+if ! start_app_server; then
+  exit 1
+fi
 
 if ! compgen -G "$SCENARIOS_DIR/*.sh" > /dev/null; then
   log_info "No scenarios found in $SCENARIOS_DIR"
@@ -65,8 +79,6 @@ for scenario in "${SCENARIOS[@]}"; do
     overall=1
   fi
 done
-
-close_browser_session
 
 if [[ "$overall" -ne 0 ]]; then
   log_error "One or more UI scenarios failed."

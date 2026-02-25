@@ -13,6 +13,9 @@ source "$HELPERS_DIR/assert.sh"
 UI_RUN_ID="${UI_RUN_ID:-$(date +%Y%m%d-%H%M%S)}"
 UI_BROWSER_SESSION="${UI_BROWSER_SESSION:-shopping-ui-tests}"
 UI_RUN_ARTIFACT_DIR=""
+UI_APP_PORT="${UI_APP_PORT:-4173}"
+UI_APP_URL="${UI_APP_URL:-http://127.0.0.1:${UI_APP_PORT}}"
+UI_DEV_SERVER_PID=""
 
 log_info() {
   echo "[INFO] $*"
@@ -36,6 +39,51 @@ init_ui_test_run() {
   mkdir -p "$UI_RUN_ARTIFACT_DIR"
 }
 
+start_app_server() {
+  local log_file="$UI_RUN_ARTIFACT_DIR/dev-server.log"
+
+  VITE_USE_FIRESTORE_EMULATOR=true \
+  VITE_FIRESTORE_EMULATOR_HOST="${UI_FIRESTORE_EMULATOR_HOST:-127.0.0.1}" \
+  VITE_FIRESTORE_EMULATOR_PORT="${UI_FIRESTORE_EMULATOR_PORT:-8080}" \
+  VITE_FIREBASE_PROJECT_ID="${UI_FIREBASE_PROJECT_ID:-demo-shopping-list}" \
+  npm run dev -- --host 127.0.0.1 --port "$UI_APP_PORT" > "$log_file" 2>&1 &
+
+  UI_DEV_SERVER_PID=$!
+
+  for _ in {1..60}; do
+    if curl -sf "$UI_APP_URL" > /dev/null; then
+      log_info "Dev server ready at $UI_APP_URL"
+      return 0
+    fi
+    sleep 1
+  done
+
+  log_error "Dev server did not become ready. See $log_file"
+  return 1
+}
+
+stop_app_server() {
+  if [[ -n "$UI_DEV_SERVER_PID" ]]; then
+    kill "$UI_DEV_SERVER_PID" >/dev/null 2>&1 || true
+    wait "$UI_DEV_SERVER_PID" 2>/dev/null || true
+    UI_DEV_SERVER_PID=""
+  fi
+}
+
+seed_test_data() {
+  UI_FIREBASE_PROJECT_ID="${UI_FIREBASE_PROJECT_ID:-demo-shopping-list}" \
+  UI_FIRESTORE_EMULATOR_HOST="${UI_FIRESTORE_EMULATOR_HOST:-127.0.0.1}" \
+  UI_FIRESTORE_EMULATOR_PORT="${UI_FIRESTORE_EMULATOR_PORT:-8080}" \
+  bash "$UI_DIR/scripts/seed.sh"
+}
+
+clean_test_data() {
+  UI_FIREBASE_PROJECT_ID="${UI_FIREBASE_PROJECT_ID:-demo-shopping-list}" \
+  UI_FIRESTORE_EMULATOR_HOST="${UI_FIRESTORE_EMULATOR_HOST:-127.0.0.1}" \
+  UI_FIRESTORE_EMULATOR_PORT="${UI_FIRESTORE_EMULATOR_PORT:-8080}" \
+  bash "$UI_DIR/scripts/clean.sh"
+}
+
 capture_failure_artifacts() {
   local scenario_name="$1"
   local scenario_artifacts="$UI_RUN_ARTIFACT_DIR/$scenario_name"
@@ -57,7 +105,23 @@ run_ui_scenario() {
 
   log_info "Running scenario: $scenario_name"
 
-  if TARGET="$target" ROOT_DIR="$ROOT_DIR" UI_RUN_ARTIFACT_DIR="$UI_RUN_ARTIFACT_DIR" UI_BROWSER_SESSION="$UI_BROWSER_SESSION" bash "$scenario_path"; then
+  if ! seed_test_data; then
+    log_error "Failed to seed test data before $scenario_name"
+    capture_failure_artifacts "$scenario_name"
+    return 1
+  fi
+
+  local status=0
+  if ! TARGET="$target" ROOT_DIR="$ROOT_DIR" APP_URL="$UI_APP_URL" UI_RUN_ARTIFACT_DIR="$UI_RUN_ARTIFACT_DIR" UI_BROWSER_SESSION="$UI_BROWSER_SESSION" bash "$scenario_path"; then
+    status=1
+  fi
+
+  if ! clean_test_data; then
+    log_warn "Data cleanup failed after $scenario_name"
+    status=1
+  fi
+
+  if [[ "$status" -eq 0 ]]; then
     log_success "$scenario_name"
     return 0
   fi
