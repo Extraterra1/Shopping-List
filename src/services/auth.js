@@ -48,7 +48,10 @@ export const upsertUserProfile = async (user) => {
 
   const existing = await getDoc(profileRef);
   if (existing.exists()) {
-    await setDoc(profileRef, profileData, { merge: true });
+    await setDoc(profileRef, {
+      ...profileData,
+      createdAt: existing.data().createdAt
+    }, { merge: true });
     return;
   }
 

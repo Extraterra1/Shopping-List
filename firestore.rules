@@ -23,9 +23,7 @@ service cloud.firestore {
       ]) &&
       validString(data.displayName, 0, 80) &&
       validString(data.email, 0, 254) &&
-      validString(data.photoURL, 0, 2048) &&
-      data.createdAt is timestamp &&
-      data.lastLoginAt is timestamp;
+      validString(data.photoURL, 0, 2048);
     }
 
     function validGroceryData(data) {
@@ -41,16 +39,13 @@ service cloud.firestore {
       validString(data.emoji, 1, 8) &&
       data.checked is bool &&
       data.order is int &&
-      data.order >= 0 &&
-      data.order <= 1000000 &&
-      data.createdAt is timestamp &&
-      data.updatedAt is timestamp;
+      data.order >= -10000000000000 &&
+      data.order <= 1000000;
     }
 
     function validCustomEmojiData(data) {
       return data.keys().hasOnly(['emoji', 'updatedAt']) &&
-      validString(data.emoji, 1, 8) &&
-      data.updatedAt is timestamp;
+      validString(data.emoji, 1, 8);
     }
 
     match /users/{uid} {
