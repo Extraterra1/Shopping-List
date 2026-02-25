@@ -18,12 +18,14 @@ service cloud.firestore {
         'displayName',
         'email',
         'photoURL',
+        'language',
         'createdAt',
         'lastLoginAt'
       ]) &&
       validString(data.displayName, 0, 80) &&
       validString(data.email, 0, 254) &&
-      validString(data.photoURL, 0, 2048);
+      validString(data.photoURL, 0, 2048) &&
+      (!('language' in data) || data.language in ['en-US', 'pt-PT', 'es-ES']);
     }
 
     function validGroceryData(data) {
