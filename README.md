@@ -2,7 +2,7 @@
 
 A premium, mobile-first shopping list Progressive Web App designed with a minimalist aesthetic that Jony Ive would approve of.
 
-This is a **simple vibe coded app**, built entirely by **Gemini 3 Pro** using **Antigravity**.
+This is a simple grocery list app built with React and Firebase.
 
 ## ✨ Features
 
@@ -103,4 +103,3 @@ Tap the edit icon on an active item to change its name or emoji, then save.
 MIT
 
 ---
-*Coded with 🤍 by Gemini 3 Pro via Antigravity*
