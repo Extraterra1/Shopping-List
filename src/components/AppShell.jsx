@@ -1,13 +1,15 @@
 import { useEffect, useRef, useState } from "react";
 import PropTypes from "prop-types";
 import { FiLogOut } from "react-icons/fi";
+import { useLanguage } from "../context/LanguageContext";
 import AddItem from "./AddItem";
 import ProductList from "./ProductList";
 import Button from "./ui/Button";
 
-const AppShell = ({ user, onSignOut }) => {
+const AppShell = ({ user, onSignOut, onLanguageChange, languageError }) => {
   const [menuOpen, setMenuOpen] = useState(false);
   const menuRef = useRef(null);
+  const { language, supportedLanguages, t } = useLanguage();
   const userName = user.displayName || user.email || "User";
   const avatarChar = userName[0]?.toUpperCase() || "U";
 
@@ -41,15 +43,15 @@ const AppShell = ({ user, onSignOut }) => {
         <header style={{ marginBottom: "var(--spacing-xl)", paddingTop: "var(--spacing-lg)" }}>
           <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: "var(--spacing-md)" }}>
             <div>
-              <h1 className="title">Groceries</h1>
-              <p className="subtitle">Your mobile shopping list</p>
+              <h1 className="title">{t("app.title")}</h1>
+              <p className="subtitle">{t("app.subtitle")}</p>
             </div>
 
             <div style={{ position: "relative" }} ref={menuRef}>
               <button
                 type="button"
                 onClick={() => setMenuOpen((current) => !current)}
-                aria-label="Open account menu"
+                aria-label={t("menu.openAccount")}
                 aria-expanded={menuOpen}
                 data-testid="account-menu-trigger"
                 style={{
@@ -104,7 +106,7 @@ const AppShell = ({ user, onSignOut }) => {
                     position: "absolute",
                     top: "calc(100% + var(--spacing-sm))",
                     right: 0,
-                    width: 170,
+                    width: 220,
                     padding: "var(--spacing-sm)",
                     borderRadius: "var(--radius-md)",
                     backgroundColor: "var(--surface-color)",
@@ -112,6 +114,50 @@ const AppShell = ({ user, onSignOut }) => {
                     zIndex: 20
                   }}
                 >
+                  <div data-testid="account-language-section" style={{ marginBottom: "var(--spacing-sm)" }}>
+                    <p
+                      style={{
+                        fontSize: "0.72rem",
+                        textTransform: "uppercase",
+                        letterSpacing: "0.08em",
+                        color: "var(--text-secondary)",
+                        marginBottom: "var(--spacing-xs)",
+                        fontWeight: 700
+                      }}
+                    >
+                      {t("menu.language")}
+                    </p>
+                    <div style={{ display: "grid", gap: "6px" }}>
+                      {supportedLanguages.map((entry) => (
+                        <button
+                          key={entry.code}
+                          type="button"
+                          data-testid={`account-lang-option-${entry.code}`}
+                          onClick={() => {
+                            onLanguageChange(entry.code);
+                            setMenuOpen(false);
+                          }}
+                          style={{
+                            border: "1px solid rgba(125, 125, 130, 0.3)",
+                            backgroundColor:
+                              entry.code === language ? "rgba(0, 113, 227, 0.12)" : "var(--surface-color)",
+                            borderRadius: "var(--radius-sm)",
+                            padding: "7px 9px",
+                            fontSize: "0.85rem",
+                            display: "flex",
+                            alignItems: "center",
+                            gap: "8px",
+                            color: "var(--text-primary)",
+                            width: "100%"
+                          }}
+                        >
+                          <span>{entry.flag}</span>
+                          <span>{entry.label}</span>
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+
                   <Button
                     variant="secondary"
                     icon={FiLogOut}
@@ -120,19 +166,33 @@ const AppShell = ({ user, onSignOut }) => {
                       onSignOut();
                     }}
                     data-testid="sign-out"
-                    aria-label="Sign out"
+                    aria-label={t("menu.signOut")}
                     style={{
                       padding: "8px 12px",
                       fontSize: "0.9rem",
-                      borderRadius: "var(--radius-md)"
+                      borderRadius: "var(--radius-md)",
+                      marginTop: "2px"
                     }}
                   >
-                    Sign Out
+                    {t("menu.signOut")}
                   </Button>
                 </div>
               ) : null}
             </div>
           </div>
+
+          {languageError ? (
+            <p
+              data-testid="account-language-error"
+              style={{
+                marginTop: "var(--spacing-sm)",
+                color: "var(--danger-color)",
+                fontSize: "0.9rem"
+              }}
+            >
+              {languageError}
+            </p>
+          ) : null}
         </header>
 
         <AddItem uid={user.uid} />
@@ -149,7 +209,9 @@ AppShell.propTypes = {
     email: PropTypes.string,
     photoURL: PropTypes.string
   }).isRequired,
-  onSignOut: PropTypes.func.isRequired
+  onSignOut: PropTypes.func.isRequired,
+  onLanguageChange: PropTypes.func.isRequired,
+  languageError: PropTypes.string
 };
 
 export default AppShell;

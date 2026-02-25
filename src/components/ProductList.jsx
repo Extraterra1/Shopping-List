@@ -4,8 +4,10 @@ import styled from 'styled-components';
 import { motion, AnimatePresence, Reorder, useDragControls } from 'framer-motion';
 import { FaCheck, FaTrash, FaPen, FaSave, FaTimes, FaBars } from 'react-icons/fa';
 import PropTypes from 'prop-types';
+import { useLanguage } from "../context/LanguageContext";
 
 const ProductList = ({ uid }) => {
+  const { t } = useLanguage();
   const [items, setItems] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const [editingId, setEditingId] = useState(null);
@@ -79,13 +81,13 @@ const ProductList = ({ uid }) => {
   };
 
   if (isLoading) {
-    return <LoadingContainer data-testid="list-loading">Loading...</LoadingContainer>;
+    return <LoadingContainer data-testid="list-loading">{t("productList.loading")}</LoadingContainer>;
   }
 
   if (items.length === 0) {
     return (
       <EmptyCard className="card" data-testid="list-empty">
-        <EmptyText>Your list is empty. Add something!</EmptyText>
+        <EmptyText>{t("productList.empty")}</EmptyText>
       </EmptyCard>
     );
   }
@@ -110,6 +112,7 @@ const ProductList = ({ uid }) => {
               startEdit={startEdit}
               cancelEdit={cancelEdit}
               saveEdit={saveEdit}
+              t={t}
             />
           ))}
         </AnimatePresence>
@@ -118,7 +121,7 @@ const ProductList = ({ uid }) => {
       {/* Completed Items (Static) */}
       {completedItems.length > 0 && (
         <>
-          <SectionHeader data-testid="completed-section">Completed</SectionHeader>
+          <SectionHeader data-testid="completed-section">{t("productList.completed")}</SectionHeader>
           <CompletedList data-testid="completed-list">
             {completedItems.map((item) => (
               <Item
@@ -133,6 +136,7 @@ const ProductList = ({ uid }) => {
                 cancelEdit={cancelEdit}
                 saveEdit={saveEdit}
                 isCompleted={true}
+                t={t}
               />
             ))}
           </CompletedList>
@@ -143,7 +147,7 @@ const ProductList = ({ uid }) => {
 };
 
 // Extracted Item component for cleanliness
-const Item = ({ item, editingId, editForm, setEditForm, handleToggle, handleDelete, startEdit, cancelEdit, saveEdit, isCompleted }) => {
+const Item = ({ item, editingId, editForm, setEditForm, handleToggle, handleDelete, startEdit, cancelEdit, saveEdit, isCompleted, t }) => {
   const isEditing = editingId === item.id;
   const controls = useDragControls();
   const safeName = item.name?.toLowerCase().replace(/\s+/g, '-');
@@ -160,7 +164,7 @@ const Item = ({ item, editingId, editForm, setEditForm, handleToggle, handleDele
       $isCompleted={isCompleted}
       $checked={item.checked}
       data-testid={`item-card-${item.id}`}
-      aria-label={`Grocery item ${item.name}`}
+      aria-label={t("productList.aria.groceryItem", { name: item.name })}
     >
       {isEditing ? (
         <EditFormContainer onClick={(e) => e.stopPropagation()} data-testid={`item-edit-form-${item.id}`}>
@@ -169,19 +173,19 @@ const Item = ({ item, editingId, editForm, setEditForm, handleToggle, handleDele
             onChange={(e) => setEditForm({ ...editForm, emoji: e.target.value })}
             onFocus={() => setEditForm((prev) => ({ ...prev, emoji: '' }))}
             data-testid={`edit-emoji-input-${safeName}`}
-            aria-label={`Edit emoji for ${item.name}`}
+            aria-label={t("productList.aria.editEmoji", { name: item.name })}
           />
           <NameInput
             value={editForm.name}
             onChange={(e) => setEditForm({ ...editForm, name: e.target.value })}
             autoFocus
             data-testid={`edit-name-input-${safeName}`}
-            aria-label={`Edit name for ${item.name}`}
+            aria-label={t("productList.aria.editName", { name: item.name })}
           />
-          <ActionButton onClick={(e) => saveEdit(e, item)} $variant="save" aria-label={`Save ${item.name}`} data-testid={`save-edit-${safeName}`}>
+          <ActionButton onClick={(e) => saveEdit(e, item)} $variant="save" aria-label={t("productList.aria.save", { name: item.name })} data-testid={`save-edit-${safeName}`}>
             <FaSave size={20} />
           </ActionButton>
-          <ActionButton onClick={cancelEdit} $variant="cancel" aria-label={`Cancel editing ${item.name}`} data-testid={`cancel-edit-${safeName}`}>
+          <ActionButton onClick={cancelEdit} $variant="cancel" aria-label={t("productList.aria.cancelEditing", { name: item.name })} data-testid={`cancel-edit-${safeName}`}>
             <FaTimes size={20} />
           </ActionButton>
         </EditFormContainer>
@@ -193,7 +197,7 @@ const Item = ({ item, editingId, editForm, setEditForm, handleToggle, handleDele
               onPointerDown={(e) => controls.start(e)}
               role="button"
               tabIndex={0}
-              aria-label={`Reorder ${item.name}`}
+              aria-label={t("productList.aria.reorder", { name: item.name })}
               data-testid={`drag-handle-${safeName}`}
             >
               <FaBars />
@@ -204,7 +208,7 @@ const Item = ({ item, editingId, editForm, setEditForm, handleToggle, handleDele
                 e.stopPropagation();
                 handleToggle(item);
               }}
-              aria-label={`Toggle ${item.name}`}
+              aria-label={t("productList.aria.toggle", { name: item.name })}
               $checked={item.checked}
               data-testid={`item-check-${safeName}`}
             >
@@ -219,7 +223,7 @@ const Item = ({ item, editingId, editForm, setEditForm, handleToggle, handleDele
             <IconButton
               onClick={(e) => startEdit(e, item)}
               $variant="edit"
-              aria-label={`Edit ${item.name}`}
+              aria-label={t("productList.aria.edit", { name: item.name })}
               data-testid={`edit-item-${safeName}`}
             >
               <FaPen size={20} />
@@ -228,7 +232,7 @@ const Item = ({ item, editingId, editForm, setEditForm, handleToggle, handleDele
               <IconButton
                 onClick={(e) => handleDelete(e, item.id)}
                 $variant="delete"
-                aria-label={`Delete ${item.name}`}
+                aria-label={t("productList.aria.delete", { name: item.name })}
                 data-testid={`delete-item-${safeName}`}
               >
                 <FaTrash size={20} />

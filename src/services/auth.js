@@ -11,6 +11,7 @@ import {
 } from "firebase/auth";
 import { doc, getDoc, serverTimestamp, setDoc } from "firebase/firestore";
 import { auth, db } from "../firebase";
+import { isSupportedLanguage, normalizeLanguage } from "../i18n/language";
 
 const googleProvider = new GoogleAuthProvider();
 googleProvider.setCustomParameters({ prompt: "select_account" });
@@ -59,8 +60,28 @@ export const signInTestUser = async () => {
   await signInWithEmailAndPassword(auth, email, password);
 };
 
-export const upsertUserProfile = async (user) => {
+const resolveLanguageForProfile = (existingLanguage, preferredLanguage, overrideLanguage) => {
+  const normalizedExisting = isSupportedLanguage(existingLanguage) ? existingLanguage : null;
+  const normalizedPreferred = preferredLanguage ? normalizeLanguage(preferredLanguage) : null;
+
+  if (overrideLanguage && normalizedPreferred) {
+    return normalizedPreferred;
+  }
+
+  return normalizedExisting || normalizedPreferred || null;
+};
+
+export const upsertUserProfile = async (user, options = {}) => {
+  const { preferredLanguage = null, overrideLanguage = false } = options;
   const profileRef = doc(db, "users", user.uid);
+  const existing = await getDoc(profileRef);
+  const existingData = existing.exists() ? existing.data() : null;
+  const resolvedLanguage = resolveLanguageForProfile(
+    existingData?.language,
+    preferredLanguage,
+    overrideLanguage
+  );
+
   const profileData = {
     displayName: user.displayName || "",
     email: user.email || "",
@@ -68,17 +89,30 @@ export const upsertUserProfile = async (user) => {
     lastLoginAt: serverTimestamp()
   };
 
-  const existing = await getDoc(profileRef);
-  if (existing.exists()) {
-    await setDoc(profileRef, {
-      ...profileData,
-      createdAt: existing.data().createdAt
-    }, { merge: true });
-    return;
+  if (resolvedLanguage) {
+    profileData.language = resolvedLanguage;
   }
 
-  await setDoc(profileRef, {
+  if (existingData) {
+    await setDoc(
+      profileRef,
+      {
+      ...profileData,
+      createdAt: existingData.createdAt
+      },
+      { merge: true }
+    );
+    return { ...existingData, ...profileData, createdAt: existingData.createdAt };
+  }
+
+  await setDoc(
+    profileRef,
+    {
     ...profileData,
     createdAt: serverTimestamp()
-  });
+    },
+    { merge: true }
+  );
+
+  return profileData;
 };

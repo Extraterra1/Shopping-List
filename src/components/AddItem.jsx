@@ -1,11 +1,13 @@
 import { useState } from 'react';
 import PropTypes from 'prop-types';
 import { addGroceryItem } from '../services/firestore';
+import { useLanguage } from "../context/LanguageContext";
 import Input from './ui/Input';
 import Button from './ui/Button';
 import { FaPlus } from 'react-icons/fa';
 
 const AddItem = ({ uid }) => {
+  const { t } = useLanguage();
   const [value, setValue] = useState('');
   const [loading, setLoading] = useState(false);
 
@@ -19,7 +21,7 @@ const AddItem = ({ uid }) => {
       setValue('');
     } catch (error) {
       console.error('Failed to add item', error);
-      alert('Error adding item. Check console.');
+      alert(t("addItem.error"));
     } finally {
       setLoading(false);
     }
@@ -31,8 +33,8 @@ const AddItem = ({ uid }) => {
         <Input
           value={value}
           onChange={(e) => setValue(e.target.value)}
-          placeholder="Add item (e.g., Milk)"
-          aria-label="Add item"
+          placeholder={t("addItem.placeholder")}
+          aria-label={t("addItem.inputAria")}
           data-testid="add-input"
         />
         <div style={{ width: '60px' }}>
@@ -42,7 +44,7 @@ const AddItem = ({ uid }) => {
             icon={FaPlus}
             disabled={loading || !value.trim()}
             style={{ height: '100%', padding: '0' }}
-            aria-label="Add item to list"
+            aria-label={t("addItem.submitAria")}
             data-testid="add-submit"
           />
         </div>
