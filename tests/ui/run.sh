@@ -42,9 +42,6 @@ if [[ "${UI_EMULATOR_WRAPPED:-0}" != "1" && "${UI_SKIP_EMULATOR:-0}" != "1" ]]; 
     "UI_EMULATOR_WRAPPED=1 UI_FIREBASE_PROJECT_ID=${UI_FIREBASE_PROJECT_ID:-demo-shopping-list} bash tests/ui/run.sh ${escaped_args}"
 fi
 
-init_ui_test_run "$TARGET"
-log_info "Running UI scenarios for target: $TARGET"
-log_info "Artifacts: $UI_RUN_ARTIFACT_DIR"
 trap 'stop_app_server; close_browser_session' EXIT
 
 if ! start_app_server; then
@@ -73,11 +70,22 @@ if [[ "${#SCENARIOS[@]}" -eq 0 ]]; then
   exit 1
 fi
 
+TARGETS=("$TARGET")
+if [[ "$TARGET" == "all" ]]; then
+  TARGETS=("desktop" "mobile")
+fi
+
 overall=0
-for scenario in "${SCENARIOS[@]}"; do
-  if ! run_ui_scenario "$scenario" "$TARGET"; then
-    overall=1
-  fi
+for run_target in "${TARGETS[@]}"; do
+  init_ui_test_run "$run_target"
+  log_info "Running UI scenarios for target: $run_target"
+  log_info "Artifacts: $UI_RUN_ARTIFACT_DIR"
+
+  for scenario in "${SCENARIOS[@]}"; do
+    if ! run_ui_scenario "$scenario" "$run_target"; then
+      overall=1
+    fi
+  done
 done
 
 if [[ "$overall" -ne 0 ]]; then
