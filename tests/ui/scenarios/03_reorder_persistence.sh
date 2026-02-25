@@ -17,7 +17,7 @@ UI_FIRESTORE_EMULATOR_PORT="${UI_FIRESTORE_EMULATOR_PORT:-8080}" \
 node "$ROOT_DIR/tests/ui/scripts/firestore-data.mjs" reorder-active >/dev/null
 
 ui_open_app "${APP_URL:-http://127.0.0.1:4173}"
-ui_wait_for_testid "add-input"
+ui_login_test_user
 ab wait 500 >/dev/null
 
 first_before_reload="$(ab eval 'document.querySelector("[data-testid^=\"active-row-\"] [data-testid^=\"item-text-\"]")?.textContent?.trim() ?? ""')"

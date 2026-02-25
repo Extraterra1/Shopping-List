@@ -25,6 +25,32 @@ ui_open_app() {
   ab wait 500 >/dev/null
 }
 
+ui_login_test_user() {
+  local has_shell
+  local has_onboarding
+
+  for _ in {1..30}; do
+    has_shell="$(ab eval 'String(Boolean(document.querySelector("[data-testid=\"app-shell\"]")))')"
+    if [[ "$has_shell" == "true" || "$has_shell" == "\"true\"" ]]; then
+      ui_wait_for_testid "add-input"
+      return 0
+    fi
+
+    has_onboarding="$(ab eval 'String(Boolean(document.querySelector("[data-testid=\"onboarding-screen\"]")))')"
+    if [[ "$has_onboarding" == "true" || "$has_onboarding" == "\"true\"" ]]; then
+      ui_click_testid "test-login"
+      ui_wait_for_testid "app-shell"
+      ui_wait_for_testid "add-input"
+      return 0
+    fi
+
+    sleep 0.2
+  done
+
+  echo "[ASSERT] Unable to reach onboarding or app shell before test login."
+  return 1
+}
+
 ui_wait_for_testid() {
   local testid="$1"
   ab wait "[data-testid=\"$testid\"]" >/dev/null

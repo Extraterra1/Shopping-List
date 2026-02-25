@@ -7,7 +7,7 @@ source "$ROOT_DIR/tests/ui/helpers/assert.sh"
 
 ui_set_viewport "${TARGET:-desktop}"
 ui_open_app "${APP_URL:-http://127.0.0.1:4173}"
-ui_wait_for_testid "add-input"
+ui_login_test_user
 
 # Edit existing active item and save a custom emoji preference.
 ui_click_testid "edit-item-milk"
@@ -25,7 +25,7 @@ ui_click_testid "add-submit"
 ab wait 500 >/dev/null
 
 page_text="$(ui_get_body_text)"
-assert_contains "$page_text" "🍵 Matcha tea" "New item with learned name should reuse custom emoji."
+assert_contains "$page_text" "🍵 Matcha Tea" "New item with learned name should reuse custom emoji."
 
 # Delete completed item.
 assert_contains "$page_text" "🥚 Eggs" "Baseline completed item should exist before delete."

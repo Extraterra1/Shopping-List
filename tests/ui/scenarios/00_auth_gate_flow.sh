@@ -7,6 +7,12 @@ source "$ROOT_DIR/tests/ui/helpers/assert.sh"
 
 ui_set_viewport "${TARGET:-desktop}"
 ui_open_app "${APP_URL:-http://127.0.0.1:4173}"
+
+has_shell="$(ab eval 'String(Boolean(document.querySelector("[data-testid=\"app-shell\"]")))')"
+if [[ "$has_shell" == "true" || "$has_shell" == "\"true\"" ]]; then
+  ui_click_testid "sign-out"
+fi
+
 ui_wait_for_testid "onboarding-screen"
 
 onboarding_visible="$(ab is visible "[data-testid=\"onboarding-screen\"]")"

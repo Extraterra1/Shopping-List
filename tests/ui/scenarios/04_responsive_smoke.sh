@@ -8,7 +8,7 @@ source "$ROOT_DIR/tests/ui/helpers/assert.sh"
 ui_set_viewport "${TARGET:-desktop}"
 ui_open_app "${APP_URL:-http://127.0.0.1:4173}"
 
-ui_wait_for_testid "add-input"
+ui_login_test_user
 ui_wait_for_testid "product-list"
 
 is_input_visible="$(ab is visible "[data-testid=\"add-input\"]")"

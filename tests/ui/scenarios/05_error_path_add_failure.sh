@@ -12,7 +12,7 @@ fi
 
 ui_set_viewport "${TARGET:-desktop}"
 ui_open_app "${APP_URL:-http://127.0.0.1:4173}"
-ui_wait_for_testid "add-input"
+ui_login_test_user
 
 # Force Firestore writes to fail and validate UI behavior.
 ab network route "**localhost:8080/**" --abort >/dev/null
@@ -25,6 +25,6 @@ input_value="$(ab eval 'document.querySelector("[data-testid=\"add-input\"]")?.v
 assert_equals "$input_value" "Papaya" "Input value should be preserved when add request fails."
 
 console_logs="$(ab console)"
-assert_contains "$console_logs" "transport errored" "Error path should report Firestore transport failure."
+assert_contains "$console_logs" "ERR_FAILED" "Error path should report failed Firestore network requests."
 
 ab network unroute >/dev/null

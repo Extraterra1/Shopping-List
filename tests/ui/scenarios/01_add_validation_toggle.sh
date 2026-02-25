@@ -7,7 +7,7 @@ source "$ROOT_DIR/tests/ui/helpers/assert.sh"
 
 ui_set_viewport "${TARGET:-desktop}"
 ui_open_app "${APP_URL:-http://127.0.0.1:4173}"
-ui_wait_for_testid "add-input"
+ui_login_test_user
 
 # Validation: submit stays disabled for whitespace input.
 ui_fill_testid "add-input" "   "
@@ -43,9 +43,15 @@ assert_equals "$bread_in_active_after_card_tap" "true" "Bread should stay active
 assert_equals "$bread_in_completed_after_card_tap" "false" "Bread should not move to completed when tapping the card."
 
 ui_click_testid "item-check-bread"
-ab wait 500 >/dev/null
-
-bread_in_active="$(ab eval 'String(document.querySelector("[data-testid=\"active-list\"]")?.innerText?.includes("Bread") ?? false)')"
-bread_in_completed="$(ab eval 'String(document.querySelector("[data-testid=\"completed-list\"]")?.innerText?.includes("Bread") ?? false)')"
+bread_in_active="true"
+bread_in_completed="false"
+for _ in {1..20}; do
+  bread_in_active="$(ab eval 'String(document.querySelector("[data-testid=\"active-list\"]")?.innerText?.includes("Bread") ?? false)')"
+  bread_in_completed="$(ab eval 'String(document.querySelector("[data-testid=\"completed-list\"]")?.innerText?.includes("Bread") ?? false)')"
+  if [[ "$bread_in_active" == "false" && "$bread_in_completed" == "true" ]]; then
+    break
+  fi
+  sleep 0.2
+done
 assert_equals "$bread_in_active" "false" "Bread should no longer appear in the active list after checkbox toggle."
 assert_equals "$bread_in_completed" "true" "Bread should move to the completed list after checkbox toggle."
