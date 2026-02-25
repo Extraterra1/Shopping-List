@@ -41,7 +41,7 @@ if [[ "${UI_EMULATOR_WRAPPED:-0}" != "1" && "${UI_SKIP_EMULATOR:-0}" != "1" ]]; 
   fi
   exec firebase emulators:exec \
     --project "${UI_FIREBASE_PROJECT_ID:-demo-shopping-list}" \
-    --only firestore \
+    --only firestore,auth \
     "UI_EMULATOR_WRAPPED=1 UI_FIREBASE_PROJECT_ID=${UI_FIREBASE_PROJECT_ID:-demo-shopping-list} bash tests/ui/run.sh ${escaped_args}"
 fi
 
