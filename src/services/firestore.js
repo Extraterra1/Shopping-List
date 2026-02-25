@@ -22,12 +22,17 @@ export const subscribeToGroceries = (callback) => {
   });
 };
 
-// Helper to capitalize first letter
-const capitalize = (s) => s.charAt(0).toUpperCase() + s.slice(1);
+// Helper to capitalize each word (title case)
+const titleCase = (s) =>
+  s
+    .trim()
+    .split(/\s+/)
+    .map((word) => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
+    .join(' ');
 
 export const addGroceryItem = async (name) => {
   try {
-    const cleanName = capitalize(name.trim());
+    const cleanName = titleCase(name);
     const emoji = getEmojiForProduct(cleanName);
     // Negative timestamp ensures new items appear at the top (smallest number) in ascending sort
     const order = -Date.now();
@@ -66,7 +71,7 @@ export const updateGroceryItem = async (id, data) => {
   const itemRef = doc(db, COLLECTION_NAME, id);
   const updates = { ...data };
   if (updates.name) {
-    updates.name = capitalize(updates.name.trim());
+    updates.name = titleCase(updates.name);
   }
   await updateDoc(itemRef, updates);
 };

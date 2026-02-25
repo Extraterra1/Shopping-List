@@ -139,6 +139,11 @@ const Item = ({ item, editingId, editForm, setEditForm, handleToggle, handleDele
   const isEditing = editingId === item.id;
   const controls = useDragControls();
   const safeName = item.name?.toLowerCase().replace(/\s+/g, '-');
+  const displayName = item.name
+    ?.trim()
+    .split(/\s+/)
+    .map((word) => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
+    .join(' ');
 
   const content = (
     <StyledCard
@@ -198,7 +203,7 @@ const Item = ({ item, editingId, editForm, setEditForm, handleToggle, handleDele
               {item.checked && <FaCheck />}
             </Checkbox>
             <ItemText $isCompleted={isCompleted} data-testid={`item-text-${safeName}`}>
-              {item.emoji} {item.name}
+              {item.emoji} {displayName}
             </ItemText>
           </ItemContentContainer>
 
