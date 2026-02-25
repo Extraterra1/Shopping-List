@@ -3,15 +3,23 @@ import { subscribeToGroceries, toggleGroceryItem, removeGroceryItem, updateGroce
 import styled from 'styled-components';
 import { motion, AnimatePresence, Reorder, useDragControls } from 'framer-motion';
 import { FaCheck, FaTrash, FaPen, FaSave, FaTimes, FaBars } from 'react-icons/fa';
+import PropTypes from 'prop-types';
 
-const ProductList = () => {
+const ProductList = ({ uid }) => {
   const [items, setItems] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const [editingId, setEditingId] = useState(null);
   const [editForm, setEditForm] = useState({ name: '', emoji: '' });
 
   useEffect(() => {
-    const unsubscribe = subscribeToGroceries((data) => {
+    if (!uid) {
+      setItems([]);
+      setIsLoading(false);
+      return () => {};
+    }
+
+    setIsLoading(true);
+    const unsubscribe = subscribeToGroceries(uid, (data) => {
       // If we are currently dragging (or just reordered locally), we might have a conflict.
       // But for simplicity, we'll accept server updates.
       // Real-time dnd with subscriptions can be tricky, but this is a simple personal app.
@@ -19,16 +27,16 @@ const ProductList = () => {
       setIsLoading(false);
     });
     return () => unsubscribe();
-  }, []);
+  }, [uid]);
 
   const handleToggle = (item) => {
     if (editingId === item.id) return;
-    toggleGroceryItem(item.id, item.checked);
+    toggleGroceryItem(uid, item.id, item.checked);
   };
 
   const handleDelete = (e, id) => {
     e.stopPropagation();
-    removeGroceryItem(id);
+    removeGroceryItem(uid, id);
   };
 
   const startEdit = (e, item) => {
@@ -45,14 +53,14 @@ const ProductList = () => {
   const saveEdit = async (e, item) => {
     e.stopPropagation();
     // 1. Update the item itself
-    await updateGroceryItem(item.id, {
+    await updateGroceryItem(uid, item.id, {
       name: editForm.name,
       emoji: editForm.emoji
     });
 
     // 2. "Learn" the emoji preference if it changed
     if (editForm.emoji !== item.emoji) {
-      await saveCustomEmoji(editForm.name, editForm.emoji);
+      await saveCustomEmoji(uid, editForm.name, editForm.emoji);
     }
 
     setEditingId(null);
@@ -67,7 +75,7 @@ const ProductList = () => {
 
     // Debounce or just save immediately?
     // For immediate feel, let's just save. Batch writing is cheap enough for this scale.
-    updateGroceryOrder(combined);
+    updateGroceryOrder(uid, combined);
   };
 
   if (isLoading) {
@@ -405,5 +413,9 @@ const StyledReorderItem = styled(Reorder.Item)`
   margin-bottom: var(--spacing-sm);
   touch-action: pan-y; /* Allow scrolling on the card body */
 `;
+
+ProductList.propTypes = {
+  uid: PropTypes.string.isRequired
+};
 
 export default ProductList;

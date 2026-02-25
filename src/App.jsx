@@ -10,6 +10,8 @@ import {
   signOutCurrentUser,
   upsertUserProfile
 } from "./services/auth";
+import { subscribeToCustomEmojis } from "./services/firestore";
+import { setCustomEmojiMap } from "./utils/emoji";
 
 function App() {
   const [user, setUser] = useState(null);
@@ -37,6 +39,22 @@ function App() {
 
     return () => unsubscribe();
   }, []);
+
+  useEffect(() => {
+    if (!user?.uid) {
+      setCustomEmojiMap({});
+      return () => {};
+    }
+
+    const unsubscribe = subscribeToCustomEmojis(user.uid, (map) => {
+      setCustomEmojiMap(map);
+    });
+
+    return () => {
+      unsubscribe();
+      setCustomEmojiMap({});
+    };
+  }, [user?.uid]);
 
   const handleGoogleSignIn = async () => {
     setIsBusy(true);

@@ -1,10 +1,11 @@
 import { useState } from 'react';
+import PropTypes from 'prop-types';
 import { addGroceryItem } from '../services/firestore';
 import Input from './ui/Input';
 import Button from './ui/Button';
 import { FaPlus } from 'react-icons/fa';
 
-const AddItem = () => {
+const AddItem = ({ uid }) => {
   const [value, setValue] = useState('');
   const [loading, setLoading] = useState(false);
 
@@ -14,7 +15,7 @@ const AddItem = () => {
 
     setLoading(true);
     try {
-      await addGroceryItem(value.trim());
+      await addGroceryItem(uid, value.trim());
       setValue('');
     } catch (error) {
       console.error('Failed to add item', error);
@@ -48,6 +49,10 @@ const AddItem = () => {
       </div>
     </form>
   );
+};
+
+AddItem.propTypes = {
+  uid: PropTypes.string.isRequired
 };
 
 export default AddItem;

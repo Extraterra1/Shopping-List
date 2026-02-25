@@ -60,8 +60,8 @@ const AppShell = ({ user, onSignOut }) => {
           </div>
         </header>
 
-        <AddItem />
-        <ProductList />
+        <AddItem uid={user.uid} />
+        <ProductList uid={user.uid} />
       </div>
     </main>
   );
@@ -69,6 +69,7 @@ const AppShell = ({ user, onSignOut }) => {
 
 AppShell.propTypes = {
   user: PropTypes.shape({
+    uid: PropTypes.string.isRequired,
     displayName: PropTypes.string,
     email: PropTypes.string,
     photoURL: PropTypes.string
