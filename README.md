@@ -11,6 +11,7 @@ This is a simple grocery list app built with React and Firebase.
 -   **Google Authentication**: Onboarding + sign in required before list access.
 -   **Per-User Data Isolation**: Each Firebase user gets an independent shopping list and custom emoji map.
 -   **Smart Emoji Selection**: Automatically assigns emojis to your grocery items (e.g., "Milk" -> 🥛).
+-   **Learned Priority Ordering**: The app learns your drag-and-drop order and auto-inserts future items in the expected position (with fuzzy matching).
 -   **PWA Ready**: Installable on iOS and Android for a native app feel.
 -   **Real-time Sync**: Uses Firebase Firestore to keep your list synced across devices.
 -   **Animations**: Fluid transitions powered by Framer Motion.
@@ -51,6 +52,9 @@ This is a simple grocery list app built with React and Firebase.
     VITE_USE_AUTH_EMULATOR=false
     VITE_AUTH_EMULATOR_HOST=localhost
     VITE_AUTH_EMULATOR_PORT=9099
+
+    # Optional: disable learned priority ordering (enabled by default)
+    VITE_PRIORITY_LEARNING=true
     ```
 
 3.  **Firebase Console Setup**:

@@ -13,6 +13,8 @@ This project includes an automated UI regression suite powered by `agent-browser
 - Edit item + learned custom emoji reuse
 - Delete completed item
 - Reorder persistence after reload
+- Learned priority auto-insert for fuzzy matches (e.g., `Whole Milk` -> `Milk`)
+- Learned priority memory after list rebuild
 - Responsive smoke checks (desktop + mobile viewport)
 - Error path when Firestore writes fail
 
@@ -55,6 +57,13 @@ Example:
 
 ```bash
 UI_SCENARIO_FILTER=reorder npm run test:ui:desktop
+```
+
+To validate the new Firestore priority rules directly:
+
+```bash
+firebase emulators:exec --project demo-shopping-list --only firestore,auth \
+  "node tests/ui/scripts/firestore-data.mjs verify-priority-rules"
 ```
 
 ## Failure artifacts

@@ -66,6 +66,23 @@ service cloud.firestore {
       validString(data.emoji, 1, 8);
     }
 
+    function validItemPriorityData(data) {
+      return data.keys().hasOnly([
+        'canonicalName',
+        'priorityScore',
+        'sampleCount',
+        'createdAt',
+        'updatedAt'
+      ]) &&
+      validString(data.canonicalName, 1, 120) &&
+      data.priorityScore is int &&
+      data.priorityScore >= -1000000 &&
+      data.priorityScore <= 1000000 &&
+      data.sampleCount is int &&
+      data.sampleCount >= 0 &&
+      data.sampleCount <= 1000000;
+    }
+
     match /users/{uid} {
       allow read, delete: if isOwner(uid);
       allow create: if isOwner(uid) && validUserProfileData(request.resource.data);
@@ -83,6 +100,14 @@ service cloud.firestore {
     match /users/{uid}/custom_emojis/{emojiName} {
       allow read, delete: if isOwner(uid);
       allow create, update: if isOwner(uid) && validCustomEmojiData(request.resource.data);
+    }
+
+    match /users/{uid}/item_priorities/{priorityId} {
+      allow read, delete: if isOwner(uid);
+      allow create: if isOwner(uid) && validItemPriorityData(request.resource.data);
+      allow update: if isOwner(uid) &&
+        validItemPriorityData(request.resource.data) &&
+        request.resource.data.createdAt == resource.data.createdAt;
     }
   }
 }
