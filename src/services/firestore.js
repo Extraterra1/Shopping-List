@@ -11,7 +11,6 @@ import {
   serverTimestamp,
   setDoc,
   updateDoc,
-  where,
   writeBatch
 } from 'firebase/firestore';
 import { getEmojiForProduct } from '../utils/emoji';
@@ -61,13 +60,11 @@ const getAppendOrder = (activeItems) => {
 };
 
 const fetchActiveGroceries = async (uid) => {
-  const q = query(
-    userGroceriesCollection(uid),
-    where('checked', '==', false),
-    orderBy('order', 'asc')
-  );
+  const q = query(userGroceriesCollection(uid), orderBy('order', 'asc'));
   const snapshot = await getDocs(q);
-  return snapshot.docs.map((item) => ({ id: item.id, ...item.data() }));
+  return snapshot.docs
+    .map((item) => ({ id: item.id, ...item.data() }))
+    .filter((item) => !item.checked);
 };
 
 const resolveOrderWithPriorityLearning = async (uid, cleanName, activeItems) => {
