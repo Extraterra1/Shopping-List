@@ -4,28 +4,34 @@ import {
   collection,
   deleteDoc,
   doc,
+  getDocs,
   onSnapshot,
   orderBy,
   query,
   serverTimestamp,
   setDoc,
   updateDoc,
+  where,
   writeBatch
 } from 'firebase/firestore';
 import { getEmojiForProduct } from '../utils/emoji';
+import { findBestPriorityMatch } from '../utils/priorityMatching.js';
+import {
+  ORDER_STEP,
+  buildReorderLearningTargets,
+  computeInsertedOrder,
+  createSparseOrderUpdates
+} from '../utils/priorityOrder.js';
+import { fetchItemPriorities, learnPrioritiesFromReorder } from './itemPriorities.js';
 
 const userGroceriesCollection = (uid) => collection(db, 'users', uid, 'groceries');
 const userCustomEmojisCollection = (uid) => collection(db, 'users', uid, 'custom_emojis');
 const userGroceryDoc = (uid, id) => doc(db, 'users', uid, 'groceries', id);
 const userCustomEmojiDoc = (uid, id) => doc(db, 'users', uid, 'custom_emojis', id);
+const PRIORITY_THRESHOLD = 0.78;
+const isPriorityLearningEnabled = import.meta.env.VITE_PRIORITY_LEARNING !== 'false';
 
 export const subscribeToGroceries = (uid, callback) => {
-  // Sort by 'order' by default.
-  // Note: New items will have high 'order' (Date.now()), so if we want them at top,
-  // we might want descending?
-  // User wants Drag & Drop. Usually Top = 0.
-  // Let's use ascending sort.
-  // We'll set new items to have a very small order (negative timestamp) to appear at top.
   const q = query(userGroceriesCollection(uid), orderBy('order', 'asc'));
 
   return onSnapshot(q, (snapshot) => {
@@ -45,12 +51,60 @@ const titleCase = (s) =>
     .map((word) => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
     .join(' ');
 
+const getAppendOrder = (activeItems) => {
+  if (!Array.isArray(activeItems) || activeItems.length === 0) {
+    return 0;
+  }
+
+  const maxOrder = Math.max(...activeItems.map((item) => Number(item.order) || 0));
+  return maxOrder + ORDER_STEP;
+};
+
+const fetchActiveGroceries = async (uid) => {
+  const q = query(
+    userGroceriesCollection(uid),
+    where('checked', '==', false),
+    orderBy('order', 'asc')
+  );
+  const snapshot = await getDocs(q);
+  return snapshot.docs.map((item) => ({ id: item.id, ...item.data() }));
+};
+
+const resolveOrderWithPriorityLearning = async (uid, cleanName, activeItems) => {
+  if (!isPriorityLearningEnabled) {
+    return getAppendOrder(activeItems);
+  }
+
+  try {
+    const priorities = await fetchItemPriorities(uid);
+    const match = findBestPriorityMatch(cleanName, priorities, { threshold: PRIORITY_THRESHOLD });
+    if (!match) {
+      return getAppendOrder(activeItems);
+    }
+
+    const activeWithScores = activeItems.map((item) => {
+      const activeMatch = findBestPriorityMatch(item.name, priorities, {
+        threshold: PRIORITY_THRESHOLD
+      });
+      return {
+        ...item,
+        learnedPriorityScore: activeMatch?.priorityScore
+      };
+    });
+
+    return computeInsertedOrder(activeWithScores, Number(match.priorityScore));
+  } catch (error) {
+    console.warn('Failed to resolve learned priority placement, using fallback order.', error);
+    return getAppendOrder(activeItems);
+  }
+};
+
 export const addGroceryItem = async (uid, name) => {
   try {
     const cleanName = titleCase(name);
     const emoji = getEmojiForProduct(cleanName);
-    // Negative timestamp ensures new items appear at the top (smallest number) in ascending sort
-    const order = -Date.now();
+    const activeItems = await fetchActiveGroceries(uid);
+    const order = await resolveOrderWithPriorityLearning(uid, cleanName, activeItems);
 
     await addDoc(userGroceriesCollection(uid), {
       name: cleanName,
@@ -68,9 +122,33 @@ export const addGroceryItem = async (uid, name) => {
 
 export const updateGroceryOrder = async (uid, items) => {
   const batch = writeBatch(db);
+  const sparseUpdates = createSparseOrderUpdates(items);
+  sparseUpdates.forEach((itemUpdate) => {
+    const ref = userGroceryDoc(uid, itemUpdate.id);
+    batch.update(ref, { order: itemUpdate.order, updatedAt: serverTimestamp() });
+  });
+  await batch.commit();
+};
+
+export const persistReorderAndLearn = async (uid, reorderedActiveItems, currentItems) => {
+  await updateGroceryOrder(uid, currentItems);
+
+  if (!isPriorityLearningEnabled) {
+    return;
+  }
+
+  try {
+    const learningTargets = buildReorderLearningTargets(reorderedActiveItems);
+    await learnPrioritiesFromReorder(uid, learningTargets);
+  } catch (error) {
+    console.warn('Failed to persist learned priorities from drag reorder.', error);
+  }
+};
+
+export const setGroceryOrder = async (uid, items) => {
+  const batch = writeBatch(db);
   items.forEach((item, index) => {
     const ref = userGroceryDoc(uid, item.id);
-    // Assign explicit index as order (0, 1, 2...)
     batch.update(ref, { order: index, updatedAt: serverTimestamp() });
   });
   await batch.commit();

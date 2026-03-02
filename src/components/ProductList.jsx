@@ -1,5 +1,12 @@
 import { useState, useEffect } from 'react';
-import { subscribeToGroceries, toggleGroceryItem, removeGroceryItem, updateGroceryItem, saveCustomEmoji, updateGroceryOrder } from '../services/firestore';
+import {
+  persistReorderAndLearn,
+  removeGroceryItem,
+  saveCustomEmoji,
+  subscribeToGroceries,
+  toggleGroceryItem,
+  updateGroceryItem
+} from '../services/firestore';
 import styled from 'styled-components';
 import { motion, AnimatePresence, Reorder, useDragControls } from 'framer-motion';
 import { FaCheck, FaTrash, FaPen, FaSave, FaTimes, FaBars } from 'react-icons/fa';
@@ -71,9 +78,9 @@ const ProductList = ({ uid }) => {
 
     setItems(combined); // Optimistic update
 
-    // Debounce or just save immediately?
-    // For immediate feel, let's just save. Batch writing is cheap enough for this scale.
-    updateGroceryOrder(uid, combined);
+    persistReorderAndLearn(uid, newOrder, combined).catch((error) => {
+      console.error("Failed to persist reorder changes", error);
+    });
   };
 
   if (!uid || items === null) {
