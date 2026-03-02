@@ -7,6 +7,7 @@
     "dev": "vite --host",
     "build": "vite build",
     "lint": "eslint .",
+    "test:unit": "node --test tests/unit/*.test.js",
     "preview": "vite preview",
     "test:ui": "bash tests/ui/run.sh",
     "test:ui:desktop": "bash tests/ui/run.sh --desktop",
