@@ -4,6 +4,14 @@ A premium, mobile-first shopping list Progressive Web App designed with a minima
 
 This is a simple grocery list app built with React and Firebase.
 
+## Agent Docs
+
+If you are onboarding to the codebase for the first time, start here:
+
+- `docs/README.md`
+- `docs/architecture.md`
+- `docs/testing-and-ops.md`
+
 ## ✨ Features
 
 -   **Mobile-First Design**: Optimized for one-handed use and touch interaction.
