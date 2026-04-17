@@ -24,6 +24,16 @@ const deriveReferenceScore = (item, fallbackIndex) => {
 const sortByOrder = (items) =>
   [...items].sort((left, right) => toFiniteNumber(left.order) - toFiniteNumber(right.order));
 
+export const getFallbackInsertOrder = (activeItems) => {
+  if (!Array.isArray(activeItems) || activeItems.length === 0) {
+    return 0;
+  }
+
+  const sortedByOrder = sortByOrder(activeItems);
+  const minOrder = toFiniteNumber(sortedByOrder[0].order);
+  return minOrder - ORDER_STEP;
+};
+
 export const computeInsertedOrder = (activeItems, targetScore) => {
   if (!Array.isArray(activeItems) || activeItems.length === 0) {
     return 0;
@@ -56,9 +66,7 @@ export const computeInsertedOrder = (activeItems, targetScore) => {
     return maxOrder + ORDER_STEP;
   }
 
-  const sortedByOrder = sortByOrder(activeItems);
-  const minOrder = toFiniteNumber(sortedByOrder[0].order);
-  return minOrder - ORDER_STEP;
+  return getFallbackInsertOrder(activeItems);
 };
 
 export const createSparseOrderUpdates = (items) =>

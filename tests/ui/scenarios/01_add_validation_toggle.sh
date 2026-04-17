@@ -22,6 +22,9 @@ ab wait 500 >/dev/null
 page_text="$(ui_get_body_text)"
 assert_contains "$page_text" "🍵 Tea" "Added item should be visible with mapped emoji."
 
+tea_at_top="$(ab eval '(() => { const rows = [...document.querySelectorAll("[data-testid^=\"active-row-\"] [data-testid^=\"item-text-\"]")].map((el) => el.textContent?.trim() ?? ""); return String(rows[0]?.includes("Tea") ?? false); })()')"
+assert_equals "$tea_at_top" "true" "Unknown items should be inserted at the top of the active list."
+
 # Firestore snapshots can be slightly slower on mobile viewport; poll for cleared state.
 input_value=""
 for _ in {1..20}; do

@@ -19,7 +19,8 @@ import {
   ORDER_STEP,
   buildReorderLearningTargets,
   computeInsertedOrder,
-  createSparseOrderUpdates
+  createSparseOrderUpdates,
+  getFallbackInsertOrder
 } from '../utils/priorityOrder.js';
 import { fetchItemPriorities, learnPrioritiesFromReorder } from './itemPriorities.js';
 
@@ -50,15 +51,6 @@ const titleCase = (s) =>
     .map((word) => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
     .join(' ');
 
-const getAppendOrder = (activeItems) => {
-  if (!Array.isArray(activeItems) || activeItems.length === 0) {
-    return 0;
-  }
-
-  const maxOrder = Math.max(...activeItems.map((item) => Number(item.order) || 0));
-  return maxOrder + ORDER_STEP;
-};
-
 const fetchActiveGroceries = async (uid) => {
   const q = query(userGroceriesCollection(uid), orderBy('order', 'asc'));
   const snapshot = await getDocs(q);
@@ -69,14 +61,14 @@ const fetchActiveGroceries = async (uid) => {
 
 const resolveOrderWithPriorityLearning = async (uid, cleanName, activeItems) => {
   if (!isPriorityLearningEnabled) {
-    return getAppendOrder(activeItems);
+    return getFallbackInsertOrder(activeItems);
   }
 
   try {
     const priorities = await fetchItemPriorities(uid);
     const match = findBestPriorityMatch(cleanName, priorities, { threshold: PRIORITY_THRESHOLD });
     if (!match) {
-      return getAppendOrder(activeItems);
+      return getFallbackInsertOrder(activeItems);
     }
 
     const activeWithScores = activeItems.map((item) => {
@@ -92,7 +84,7 @@ const resolveOrderWithPriorityLearning = async (uid, cleanName, activeItems) => 
     return computeInsertedOrder(activeWithScores, Number(match.priorityScore));
   } catch (error) {
     console.warn('Failed to resolve learned priority placement, using fallback order.', error);
-    return getAppendOrder(activeItems);
+    return getFallbackInsertOrder(activeItems);
   }
 };
 

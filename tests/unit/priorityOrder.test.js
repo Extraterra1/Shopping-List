@@ -1,6 +1,7 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 import {
+  getFallbackInsertOrder,
   ORDER_STEP,
   buildReorderLearningTargets,
   computeInsertedOrder,
@@ -26,6 +27,16 @@ test("computeInsertedOrder appends at end when target is highest", () => {
 
   const order = computeInsertedOrder(active, 1000);
   assert.equal(order, 200);
+});
+
+test("getFallbackInsertOrder prepends unknown items to the top of the active list", () => {
+  const active = [
+    { name: "Milk", order: 100 },
+    { name: "Cheese", order: 200 }
+  ];
+
+  const order = getFallbackInsertOrder(active);
+  assert.equal(order, 0);
 });
 
 test("createSparseOrderUpdates spaces order by ORDER_STEP", () => {
