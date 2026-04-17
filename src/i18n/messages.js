@@ -36,6 +36,8 @@ const messages = {
       loading: "Loading...",
       empty: "Your list is empty. Add something!",
       completed: "Completed",
+      clearAll: "Clear all",
+      confirmClearAll: "You sure?",
       aria: {
         groceryItem: "Grocery item {name}",
         editEmoji: "Edit emoji for {name}",
@@ -45,7 +47,9 @@ const messages = {
         reorder: "Reorder {name}",
         toggle: "Toggle {name}",
         edit: "Edit {name}",
-        delete: "Delete {name}"
+        delete: "Delete {name}",
+        clearCompleted: "Clear all completed items",
+        confirmClearCompleted: "Confirm clearing all completed items"
       }
     },
     errors: {
@@ -97,6 +101,8 @@ const messages = {
       loading: "A carregar...",
       empty: "A tua lista está vazia. Adiciona algo!",
       completed: "Concluídos",
+      clearAll: "Limpar tudo",
+      confirmClearAll: "Tens a certeza?",
       aria: {
         groceryItem: "Item de compras {name}",
         editEmoji: "Editar emoji de {name}",
@@ -106,7 +112,9 @@ const messages = {
         reorder: "Reordenar {name}",
         toggle: "Alternar {name}",
         edit: "Editar {name}",
-        delete: "Eliminar {name}"
+        delete: "Eliminar {name}",
+        clearCompleted: "Limpar todos os itens concluídos",
+        confirmClearCompleted: "Confirmar a limpeza de todos os itens concluídos"
       }
     },
     errors: {
@@ -158,6 +166,8 @@ const messages = {
       loading: "Cargando...",
       empty: "Tu lista está vacía. Añade algo.",
       completed: "Completados",
+      clearAll: "Borrar todo",
+      confirmClearAll: "¿Seguro?",
       aria: {
         groceryItem: "Producto {name}",
         editEmoji: "Editar emoji de {name}",
@@ -167,7 +177,9 @@ const messages = {
         reorder: "Reordenar {name}",
         toggle: "Cambiar estado de {name}",
         edit: "Editar {name}",
-        delete: "Eliminar {name}"
+        delete: "Eliminar {name}",
+        clearCompleted: "Borrar todos los productos completados",
+        confirmClearCompleted: "Confirmar que quieres borrar todos los productos completados"
       }
     },
     errors: {

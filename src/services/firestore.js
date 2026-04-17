@@ -173,6 +173,24 @@ export const removeGroceryItem = async (uid, id) => {
   await deleteDoc(userGroceryDoc(uid, id));
 };
 
+export const clearCompletedGroceryItems = async (uid) => {
+  const q = query(userGroceriesCollection(uid), orderBy('order', 'asc'));
+  const snapshot = await getDocs(q);
+  const completedDocs = snapshot.docs.filter((itemDoc) => itemDoc.data().checked);
+
+  if (completedDocs.length === 0) {
+    return 0;
+  }
+
+  const batch = writeBatch(db);
+  completedDocs.forEach((itemDoc) => {
+    batch.delete(itemDoc.ref);
+  });
+
+  await batch.commit();
+  return completedDocs.length;
+};
+
 export const subscribeToCustomEmojis = (uid, callback) => {
   return onSnapshot(userCustomEmojisCollection(uid), (snapshot) => {
     const emojis = {};

@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import {
+  clearCompletedGroceryItems,
   persistReorderAndLearn,
   removeGroceryItem,
   saveCustomEmoji,
@@ -13,11 +14,18 @@ import { FaCheck, FaTrash, FaPen, FaSave, FaTimes, FaBars } from 'react-icons/fa
 import PropTypes from 'prop-types';
 import { useLanguage } from "../context/LanguageContext";
 
+const CLEAR_COMPLETED_CONFIRMATION_MS = 2500;
+
 const ProductList = ({ uid }) => {
   const { t } = useLanguage();
   const [items, setItems] = useState(null);
   const [editingId, setEditingId] = useState(null);
   const [editForm, setEditForm] = useState({ name: '', emoji: '' });
+  const [isClearCompletedArmed, setIsClearCompletedArmed] = useState(false);
+  const [isClearingCompleted, setIsClearingCompleted] = useState(false);
+
+  const activeItems = items?.filter((i) => !i.checked) ?? [];
+  const completedItems = items?.filter((i) => i.checked) ?? [];
 
   useEffect(() => {
     if (!uid) {
@@ -29,6 +37,25 @@ const ProductList = ({ uid }) => {
     });
     return () => unsubscribe();
   }, [uid]);
+
+  useEffect(() => {
+    if (!isClearCompletedArmed) {
+      return undefined;
+    }
+
+    if (completedItems.length === 0) {
+      setIsClearCompletedArmed(false);
+      return undefined;
+    }
+
+    const resetTimer = window.setTimeout(() => {
+      setIsClearCompletedArmed(false);
+    }, CLEAR_COMPLETED_CONFIRMATION_MS);
+
+    return () => {
+      window.clearTimeout(resetTimer);
+    };
+  }, [completedItems.length, isClearCompletedArmed]);
 
   const handleToggle = (item) => {
     if (editingId === item.id) return;
@@ -83,6 +110,28 @@ const ProductList = ({ uid }) => {
     });
   };
 
+  const handleClearCompleted = async () => {
+    if (completedItems.length === 0 || isClearingCompleted) {
+      return;
+    }
+
+    if (!isClearCompletedArmed) {
+      setIsClearCompletedArmed(true);
+      return;
+    }
+
+    setIsClearingCompleted(true);
+
+    try {
+      await clearCompletedGroceryItems(uid);
+      setIsClearCompletedArmed(false);
+    } catch (error) {
+      console.error("Failed to clear completed grocery items", error);
+    } finally {
+      setIsClearingCompleted(false);
+    }
+  };
+
   if (!uid || items === null) {
     return <LoadingContainer data-testid="list-loading">{t("productList.loading")}</LoadingContainer>;
   }
@@ -95,8 +144,12 @@ const ProductList = ({ uid }) => {
     );
   }
 
-  const activeItems = items.filter((i) => !i.checked);
-  const completedItems = items.filter((i) => i.checked);
+  const clearCompletedLabel = isClearCompletedArmed
+    ? t("productList.confirmClearAll")
+    : t("productList.clearAll");
+  const clearCompletedAriaLabel = isClearCompletedArmed
+    ? t("productList.aria.confirmClearCompleted")
+    : t("productList.aria.clearCompleted");
 
   return (
     <ListWrapper data-testid="product-list">
@@ -124,7 +177,34 @@ const ProductList = ({ uid }) => {
       {/* Completed Items (Static) */}
       {completedItems.length > 0 && (
         <>
-          <SectionHeader data-testid="completed-section">{t("productList.completed")}</SectionHeader>
+          <CompletedHeaderRow>
+            <SectionHeader data-testid="completed-section">{t("productList.completed")}</SectionHeader>
+            <ClearCompletedButton
+              type="button"
+              layout
+              initial={false}
+              whileTap={{ scale: 0.98 }}
+              transition={{ layout: { type: "spring", stiffness: 360, damping: 26 } }}
+              onClick={handleClearCompleted}
+              aria-label={clearCompletedAriaLabel}
+              data-testid="clear-completed-button"
+              $isArmed={isClearCompletedArmed}
+              disabled={isClearingCompleted}
+            >
+              <FaTrash size={12} />
+              <AnimatePresence mode="wait" initial={false}>
+                <ClearCompletedLabel
+                  key={clearCompletedLabel}
+                  initial={{ opacity: 0, x: -8, filter: 'blur(4px)' }}
+                  animate={{ opacity: 1, x: 0, filter: 'blur(0px)' }}
+                  exit={{ opacity: 0, x: 8, filter: 'blur(4px)' }}
+                  transition={{ duration: 0.16, ease: 'easeOut' }}
+                >
+                  {clearCompletedLabel}
+                </ClearCompletedLabel>
+              </AnimatePresence>
+            </ClearCompletedButton>
+          </CompletedHeaderRow>
           <CompletedList data-testid="completed-list">
             {completedItems.map((item) => (
               <Item
@@ -287,11 +367,49 @@ const StyledReorderGroup = styled(Reorder.Group)`
 `;
 
 const SectionHeader = styled.h3`
-  margin: 20px 0 10px;
+  margin: 0;
   color: var(--text-secondary);
   font-size: 0.9rem;
   text-transform: uppercase;
   letter-spacing: 1px;
+`;
+
+const CompletedHeaderRow = styled.div`
+  margin: 20px 0 10px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--spacing-sm);
+`;
+
+const ClearCompletedButton = styled(motion.button)`
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 32px;
+  padding: 0 12px;
+  border: 1px solid ${(props) => (props.$isArmed ? 'rgba(255, 59, 48, 0.28)' : 'rgba(255, 59, 48, 0.14)')};
+  border-radius: 999px;
+  background: ${(props) => (props.$isArmed ? 'rgba(255, 59, 48, 0.16)' : 'rgba(255, 59, 48, 0.08)')};
+  color: var(--danger-color);
+  font-size: 0.78rem;
+  font-weight: 700;
+  letter-spacing: 0.01em;
+  white-space: nowrap;
+  overflow: hidden;
+  flex-shrink: 0;
+  box-shadow: ${(props) => (props.$isArmed ? '0 10px 20px rgba(255, 59, 48, 0.16)' : 'none')};
+  transition: background-color 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease, opacity 0.2s ease;
+
+  &:disabled {
+    opacity: 0.7;
+    cursor: wait;
+  }
+`;
+
+const ClearCompletedLabel = styled(motion.span)`
+  display: inline-flex;
+  align-items: center;
 `;
 
 const CompletedList = styled.ul`
