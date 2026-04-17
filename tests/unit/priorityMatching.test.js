@@ -25,6 +25,14 @@ test("findBestPriorityMatch returns null below threshold", () => {
   assert.equal(match, null);
 });
 
+test("findBestPriorityMatch tolerates a small typo in a learned item name", () => {
+  const priorities = [{ canonicalName: "canned tunna", priorityScore: 100, sampleCount: 3 }];
+
+  const match = findBestPriorityMatch("canned tuna", priorities, { threshold: 0.78 });
+  assert.equal(match?.canonicalName, "canned tunna");
+  assert.ok((match?.confidence ?? 0) >= 0.78);
+});
+
 test("findBestPriorityMatch tie-breaks by sampleCount and then lower score", () => {
   const priorities = [
     { canonicalName: "whole milk", priorityScore: 200, sampleCount: 1 },

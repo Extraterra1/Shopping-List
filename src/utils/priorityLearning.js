@@ -20,18 +20,13 @@ export const buildPriorityUpdates = (entries) =>
 
       const existing = entry.existing ?? null;
       const previousSamples = toInt(existing?.sampleCount, 0);
-      const previousScore = toInt(existing?.priorityScore, toInt(entry.targetScore, 0));
       const targetScore = toInt(entry.targetScore, 0);
       const nextSamples = previousSamples + 1;
-      const nextScore =
-        previousSamples === 0
-          ? targetScore
-          : Math.round((previousScore * previousSamples + targetScore) / nextSamples);
 
       return {
         id: getPriorityDocId(canonicalName),
         canonicalName,
-        priorityScore: nextScore,
+        priorityScore: targetScore,
         sampleCount: nextSamples,
         createdAt: existing?.createdAt ?? null
       };

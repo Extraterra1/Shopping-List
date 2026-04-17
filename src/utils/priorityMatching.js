@@ -22,6 +22,14 @@ const getTokenSet = (normalizedValue) => {
   return new Set(normalizedValue.split(" ").filter(Boolean));
 };
 
+const getTokens = (normalizedValue) => {
+  if (!normalizedValue) {
+    return [];
+  }
+
+  return normalizedValue.split(" ").filter(Boolean);
+};
+
 const getBigrams = (normalizedValue) => {
   if (!normalizedValue) {
     return [];
@@ -77,6 +85,55 @@ const diceCoefficient = (leftBigrams, rightBigrams) => {
   return (2 * overlap) / (leftBigrams.length + rightBigrams.length);
 };
 
+const levenshteinDistance = (left, right) => {
+  if (left === right) {
+    return 0;
+  }
+
+  if (!left.length) {
+    return right.length;
+  }
+
+  if (!right.length) {
+    return left.length;
+  }
+
+  const previous = Array.from({ length: right.length + 1 }, (_, index) => index);
+  const current = new Array(right.length + 1).fill(0);
+
+  for (let leftIndex = 1; leftIndex <= left.length; leftIndex += 1) {
+    current[0] = leftIndex;
+
+    for (let rightIndex = 1; rightIndex <= right.length; rightIndex += 1) {
+      const substitutionCost = left[leftIndex - 1] === right[rightIndex - 1] ? 0 : 1;
+      current[rightIndex] = Math.min(
+        current[rightIndex - 1] + 1,
+        previous[rightIndex] + 1,
+        previous[rightIndex - 1] + substitutionCost
+      );
+    }
+
+    for (let rightIndex = 0; rightIndex <= right.length; rightIndex += 1) {
+      previous[rightIndex] = current[rightIndex];
+    }
+  }
+
+  return previous[right.length];
+};
+
+const normalizedEditSimilarity = (left, right) => {
+  if (!left || !right) {
+    return 0;
+  }
+
+  const maxLength = Math.max(left.length, right.length);
+  if (maxLength === 0) {
+    return 1;
+  }
+
+  return 1 - levenshteinDistance(left, right) / maxLength;
+};
+
 const isSubset = (subset, superset) => {
   if (subset.size === 0 || superset.size === 0 || subset.size > superset.size) {
     return false;
@@ -88,6 +145,44 @@ const isSubset = (subset, superset) => {
     }
   }
   return true;
+};
+
+const computeTypoTokenScore = (inputNormalized, candidateNormalized) => {
+  const inputTokens = getTokens(inputNormalized);
+  const candidateTokens = getTokens(candidateNormalized);
+
+  if (inputTokens.length === 0 || inputTokens.length !== candidateTokens.length) {
+    return 0;
+  }
+
+  let exactMatches = 0;
+  let fuzzyMatches = 0;
+  let similarityTotal = 0;
+
+  for (let index = 0; index < inputTokens.length; index += 1) {
+    const inputToken = inputTokens[index];
+    const candidateToken = candidateTokens[index];
+
+    if (inputToken === candidateToken) {
+      exactMatches += 1;
+      similarityTotal += 1;
+      continue;
+    }
+
+    const similarity = normalizedEditSimilarity(inputToken, candidateToken);
+    if (similarity < 0.8) {
+      return 0;
+    }
+
+    fuzzyMatches += 1;
+    similarityTotal += similarity;
+  }
+
+  if (exactMatches === 0 || fuzzyMatches === 0) {
+    return 0;
+  }
+
+  return similarityTotal / inputTokens.length;
 };
 
 const computeConfidence = (inputNormalized, candidateNormalized) => {
@@ -107,8 +202,9 @@ const computeConfidence = (inputNormalized, candidateNormalized) => {
     candidateNormalized.includes(inputNormalized)
     ? 0.82
     : 0;
+  const typoTokenScore = computeTypoTokenScore(inputNormalized, candidateNormalized);
 
-  return Math.max(baseScore, subsetScore, containsScore);
+  return Math.max(baseScore, subsetScore, containsScore, typoTokenScore);
 };
 
 export const findBestPriorityMatch = (inputName, priorities, options = {}) => {
