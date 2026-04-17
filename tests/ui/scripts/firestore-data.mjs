@@ -4,12 +4,13 @@ const validModes = [
   "clean",
   "reorder-active",
   "seed-priority-insert",
+  "seed-priority-typo-insert",
   "seed-priority-rebuild",
   "verify-priority-rules"
 ];
 if (!mode || !validModes.includes(mode)) {
   console.error(
-    "Usage: node tests/ui/scripts/firestore-data.mjs <seed|clean|reorder-active|seed-priority-insert|seed-priority-rebuild|verify-priority-rules>"
+    "Usage: node tests/ui/scripts/firestore-data.mjs <seed|clean|reorder-active|seed-priority-insert|seed-priority-typo-insert|seed-priority-rebuild|verify-priority-rules>"
   );
   process.exit(2);
 }
@@ -266,6 +267,43 @@ const seedPriorityInsertData = async (uid) => {
   ]);
 };
 
+const seedPriorityTypoInsertData = async (uid) => {
+  const timestamp = nowIso();
+  await setDocument(`users/${uid}`, {
+    displayName: "UI Test User",
+    email,
+    photoURL: "",
+    createdAt: timestamp,
+    lastLoginAt: timestamp
+  });
+
+  await Promise.all([
+    setDocument(`users/${uid}/groceries/coffee-active`, {
+      name: "Coffee",
+      emoji: "☕",
+      checked: false,
+      order: 0,
+      createdAt: timestamp,
+      updatedAt: timestamp
+    }),
+    setDocument(`users/${uid}/groceries/yogurt-active`, {
+      name: "Yogurt",
+      emoji: "🥣",
+      checked: false,
+      order: 200,
+      createdAt: timestamp,
+      updatedAt: timestamp
+    }),
+    setDocument(`users/${uid}/item_priorities/canned-tunna`, {
+      canonicalName: "canned tunna",
+      priorityScore: 100,
+      sampleCount: 3,
+      createdAt: timestamp,
+      updatedAt: timestamp
+    })
+  ]);
+};
+
 const seedPriorityRebuildData = async (uid) => {
   const timestamp = nowIso();
   await setDocument(`users/${uid}`, {
@@ -409,6 +447,13 @@ const run = async () => {
       await clearDatabase();
       await seedPriorityInsertData(uid);
       console.log(`[firestore-data] seeded priority-insert fixtures for ${uid}`);
+      return;
+    }
+
+    if (mode === "seed-priority-typo-insert") {
+      await clearDatabase();
+      await seedPriorityTypoInsertData(uid);
+      console.log(`[firestore-data] seeded priority-typo-insert fixtures for ${uid}`);
       return;
     }
 

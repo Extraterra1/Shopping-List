@@ -72,3 +72,24 @@ export const learnPrioritiesFromReorder = async (uid, learningTargets) => {
 
   await upsertItemPriorities(uid, updates);
 };
+
+export const rememberPriorityPlacement = async (uid, placement) => {
+  if (!uid || !placement) {
+    return;
+  }
+
+  const canonicalName = normalizeItemName(placement.canonicalName ?? placement.name ?? "");
+  if (!canonicalName) {
+    return;
+  }
+
+  const updates = buildPriorityUpdates([
+    {
+      canonicalName,
+      targetScore: placement.targetScore,
+      existing: placement.existing ?? null
+    }
+  ]);
+
+  await upsertItemPriorities(uid, updates);
+};

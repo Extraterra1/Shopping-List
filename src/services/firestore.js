@@ -22,7 +22,12 @@ import {
   createSparseOrderUpdates,
   getFallbackInsertOrder
 } from '../utils/priorityOrder.js';
-import { fetchItemPriorities, learnPrioritiesFromReorder } from './itemPriorities.js';
+import { getPriorityDocId } from '../utils/priorityLearning.js';
+import {
+  fetchItemPriorities,
+  learnPrioritiesFromReorder,
+  rememberPriorityPlacement
+} from './itemPriorities.js';
 
 const userGroceriesCollection = (uid) => collection(db, 'users', uid, 'groceries');
 const userCustomEmojisCollection = (uid) => collection(db, 'users', uid, 'custom_emojis');
@@ -61,14 +66,14 @@ const fetchActiveGroceries = async (uid) => {
 
 const resolveOrderWithPriorityLearning = async (uid, cleanName, activeItems) => {
   if (!isPriorityLearningEnabled) {
-    return getFallbackInsertOrder(activeItems);
+    return { order: getFallbackInsertOrder(activeItems), learnedTargetScore: null, exactPriority: null };
   }
 
   try {
     const priorities = await fetchItemPriorities(uid);
     const match = findBestPriorityMatch(cleanName, priorities, { threshold: PRIORITY_THRESHOLD });
     if (!match) {
-      return getFallbackInsertOrder(activeItems);
+      return { order: getFallbackInsertOrder(activeItems), learnedTargetScore: null, exactPriority: null };
     }
 
     const activeWithScores = activeItems.map((item) => {
@@ -81,10 +86,18 @@ const resolveOrderWithPriorityLearning = async (uid, cleanName, activeItems) => 
       };
     });
 
-    return computeInsertedOrder(activeWithScores, Number(match.priorityScore));
+    const exactPriorityId = getPriorityDocId(cleanName);
+    const exactPriority =
+      priorities.find((item) => getPriorityDocId(item.canonicalName) === exactPriorityId) ?? null;
+
+    return {
+      order: computeInsertedOrder(activeWithScores, Number(match.priorityScore)),
+      learnedTargetScore: Number(match.priorityScore),
+      exactPriority
+    };
   } catch (error) {
     console.warn('Failed to resolve learned priority placement, using fallback order.', error);
-    return getFallbackInsertOrder(activeItems);
+    return { order: getFallbackInsertOrder(activeItems), learnedTargetScore: null, exactPriority: null };
   }
 };
 
@@ -93,16 +106,28 @@ export const addGroceryItem = async (uid, name) => {
     const cleanName = titleCase(name);
     const emoji = getEmojiForProduct(cleanName);
     const activeItems = await fetchActiveGroceries(uid);
-    const order = await resolveOrderWithPriorityLearning(uid, cleanName, activeItems);
+    const placement = await resolveOrderWithPriorityLearning(uid, cleanName, activeItems);
 
     await addDoc(userGroceriesCollection(uid), {
       name: cleanName,
       emoji,
       checked: false,
-      order,
+      order: placement.order,
       createdAt: serverTimestamp(),
       updatedAt: serverTimestamp()
     });
+
+    if (Number.isFinite(placement.learnedTargetScore)) {
+      try {
+        await rememberPriorityPlacement(uid, {
+          name: cleanName,
+          targetScore: placement.learnedTargetScore,
+          existing: placement.exactPriority
+        });
+      } catch (error) {
+        console.warn('Failed to remember learned priority placement for new item.', error);
+      }
+    }
   } catch (error) {
     console.error('Error adding document: ', error);
     throw error;

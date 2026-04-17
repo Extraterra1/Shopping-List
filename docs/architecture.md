@@ -262,7 +262,8 @@ When `addGroceryItem(uid, name)` runs:
 4. If priority learning is enabled, fetch `item_priorities`.
 5. Fuzzy-match the new item name against learned canonical names.
 6. If a match clears the confidence threshold, compute an insertion `order`.
-7. Otherwise append to the end of active items.
+7. If a learned placement was used, persist that exact position for the newly added canonical item immediately.
+8. Otherwise append to the end of active items.
 
 Current constants:
 
@@ -276,11 +277,12 @@ When active items are reordered:
 1. The UI immediately applies an optimistic item order.
 2. `persistReorderAndLearn(uid, reorderedActiveItems, currentItems)` writes sparse grocery orders.
 3. The same call builds learning targets for active items.
-4. `learnPrioritiesFromReorder` updates `item_priorities` using a running average.
+4. `learnPrioritiesFromReorder` updates `item_priorities` so the latest drag position wins immediately.
 
 Important rule:
 
-- Dragging is the only behavior that teaches learned priority ordering.
+- Dragging teaches learned priority ordering immediately.
+- Learned auto-inserts also store the exact placed position for the newly added canonical item.
 - Toggling complete, deleting, or editing an item does not teach ordering.
 
 ### Matching Details

@@ -61,7 +61,7 @@ test("buildReorderLearningTargets maps drag order to scores", () => {
   ]);
 });
 
-test("buildPriorityUpdates applies running average for each reordered item", () => {
+test("buildPriorityUpdates remembers the latest learned position immediately", () => {
   const updates = buildPriorityUpdates([
     {
       name: "Milk",
@@ -71,6 +71,6 @@ test("buildPriorityUpdates applies running average for each reordered item", () 
   ]);
 
   assert.equal(updates[0].canonicalName, "milk");
-  assert.equal(updates[0].priorityScore, 67);
+  assert.equal(updates[0].priorityScore, 0);
   assert.equal(updates[0].sampleCount, 3);
 });
