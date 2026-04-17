@@ -183,22 +183,30 @@ const ProductList = ({ uid }) => {
               type="button"
               layout
               initial={false}
+              animate={isClearCompletedArmed ? "armed" : "idle"}
               whileTap={{ scale: 0.98 }}
-              transition={{ layout: { type: "spring", stiffness: 360, damping: 26 } }}
+              variants={clearCompletedButtonVariants}
+              transition={clearCompletedButtonTransition}
               onClick={handleClearCompleted}
               aria-label={clearCompletedAriaLabel}
               data-testid="clear-completed-button"
               $isArmed={isClearCompletedArmed}
               disabled={isClearingCompleted}
             >
-              <FaTrash size={12} />
+              <ClearCompletedIcon
+                animate={isClearCompletedArmed ? "armed" : "idle"}
+                variants={clearCompletedIconVariants}
+                transition={clearCompletedButtonTransition}
+              >
+                <FaTrash size={12} />
+              </ClearCompletedIcon>
               <AnimatePresence mode="wait" initial={false}>
                 <ClearCompletedLabel
                   key={clearCompletedLabel}
-                  initial={{ opacity: 0, x: -8, filter: 'blur(4px)' }}
-                  animate={{ opacity: 1, x: 0, filter: 'blur(0px)' }}
-                  exit={{ opacity: 0, x: 8, filter: 'blur(4px)' }}
-                  transition={{ duration: 0.16, ease: 'easeOut' }}
+                  initial={{ opacity: 0, x: -10, scale: 0.92, filter: 'blur(4px)' }}
+                  animate={{ opacity: 1, x: 0, scale: 1, filter: 'blur(0px)' }}
+                  exit={{ opacity: 0, x: 10, scale: 0.94, filter: 'blur(4px)' }}
+                  transition={{ duration: 0.18, ease: 'easeOut' }}
                 >
                   {clearCompletedLabel}
                 </ClearCompletedLabel>
@@ -387,6 +395,7 @@ const ClearCompletedButton = styled(motion.button)`
   align-items: center;
   gap: 8px;
   min-height: 32px;
+  min-width: 104px;
   padding: 0 12px;
   border: 1px solid ${(props) => (props.$isArmed ? 'rgba(255, 59, 48, 0.28)' : 'rgba(255, 59, 48, 0.14)')};
   border-radius: 999px;
@@ -407,10 +416,50 @@ const ClearCompletedButton = styled(motion.button)`
   }
 `;
 
+const ClearCompletedIcon = styled(motion.span)`
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+`;
+
 const ClearCompletedLabel = styled(motion.span)`
   display: inline-flex;
   align-items: center;
 `;
+
+const clearCompletedButtonTransition = {
+  type: "spring",
+  stiffness: 320,
+  damping: 24,
+  mass: 0.9
+};
+
+const clearCompletedButtonVariants = {
+  idle: {
+    minWidth: 104,
+    paddingLeft: 12,
+    paddingRight: 12
+  },
+  armed: {
+    minWidth: 126,
+    paddingLeft: 14,
+    paddingRight: 16
+  }
+};
+
+const clearCompletedIconVariants = {
+  idle: {
+    rotate: 0,
+    x: 0,
+    scale: 1
+  },
+  armed: {
+    rotate: -8,
+    x: -1,
+    scale: 1.08
+  }
+};
 
 const CompletedList = styled.ul`
   list-style: none;
